@@ -1,84 +1,46 @@
-import { Calculator, DollarSign, FileText, TrendingUp } from "lucide-react";
-import React, { useState, useMemo } from "react";
+import {
+  BarChart3,
+  Calculator,
+  DollarSign,
+  FileText,
+  TrendingUp,
+} from "lucide-react";
+import { useMemo, useState } from "react";
+import { EditTaxBrackets } from "./EditTaxBrackets";
+import { useTaxBrackets } from "./TaxBracketContext";
+import { InputField, SelectField } from "./TaxFormFields";
+import { type FilingStatus, calculateTax, formatCurrency } from "./taxUtils";
+import { useLocalStorageState } from "./useLocalStorageState";
+
+const standardDeductions: Record<
+  FilingStatus,
+  { federal: number; oregon: number }
+> = {
+  single: { federal: 14600, oregon: 2770 },
+  marriedJoint: { federal: 29200, oregon: 5540 },
+};
+
+type LLCCalculatorState = {
+  income: string;
+  filingStatus: FilingStatus;
+  standardDeduction: boolean;
+  itemizedAmount: string;
+};
 
 const LLCTaxCalculator = () => {
-  const [income, setIncome] = useState("");
-  const [filingStatus, setFilingStatus] = useState("single");
-  const [standardDeduction, setStandardDeduction] = useState(true);
-  const [itemizedAmount, setItemizedAmount] = useState("");
-
-  // 2024 Tax Brackets
-  const federalBrackets = {
-    single: [
-      { min: 0, max: 11000, rate: 0.1 },
-      { min: 11000, max: 44725, rate: 0.12 },
-      { min: 44725, max: 95375, rate: 0.22 },
-      { min: 95375, max: 182050, rate: 0.24 },
-      { min: 182050, max: 231250, rate: 0.32 },
-      { min: 231250, max: 578125, rate: 0.35 },
-      { min: 578125, max: Number.POSITIVE_INFINITY, rate: 0.37 },
-    ],
-    marriedJoint: [
-      { min: 0, max: 22000, rate: 0.1 },
-      { min: 22000, max: 89450, rate: 0.12 },
-      { min: 89450, max: 190750, rate: 0.22 },
-      { min: 190750, max: 364200, rate: 0.24 },
-      { min: 364200, max: 462500, rate: 0.32 },
-      { min: 462500, max: 693750, rate: 0.35 },
-      { min: 693750, max: Number.POSITIVE_INFINITY, rate: 0.37 },
-    ],
-  };
-
-  const oregonBrackets = {
-    single: [
-      { min: 0, max: 4050, rate: 0.0475 },
-      { min: 4050, max: 10200, rate: 0.0675 },
-      { min: 10200, max: 25550, rate: 0.0875 },
-      { min: 25550, max: 64100, rate: 0.099 },
-      { min: 64100, max: Number.POSITIVE_INFINITY, rate: 0.1175 },
-    ],
-    marriedJoint: [
-      { min: 0, max: 8100, rate: 0.0475 },
-      { min: 8100, max: 20400, rate: 0.0675 },
-      { min: 20400, max: 51100, rate: 0.0875 },
-      { min: 51100, max: 128200, rate: 0.099 },
-      { min: 128200, max: Number.POSITIVE_INFINITY, rate: 0.1175 },
-    ],
-  };
-
-  const standardDeductions = {
-    single: { federal: 14600, oregon: 2770 },
-    marriedJoint: { federal: 29200, oregon: 5540 },
-  };
-
-  const calculateTax = (taxableIncome, brackets) => {
-    let tax = 0;
-    const breakdown = [];
-
-    for (const bracket of brackets) {
-      if (taxableIncome <= bracket.min) break;
-
-      const taxableInBracket =
-        Math.min(taxableIncome, bracket.max) - bracket.min;
-      const taxForBracket = taxableInBracket * bracket.rate;
-
-      if (taxableInBracket > 0) {
-        tax += taxForBracket;
-        breakdown.push({
-          range: `$${bracket.min.toLocaleString()} - ${
-            bracket.max === Number.POSITIVE_INFINITY
-              ? "∞"
-              : "$" + bracket.max.toLocaleString()
-          }`,
-          rate: (bracket.rate * 100).toFixed(2) + "%",
-          taxableAmount: taxableInBracket,
-          tax: taxForBracket,
-        });
-      }
+  const [state, setState] = useLocalStorageState<LLCCalculatorState>(
+    "llcInputs",
+    {
+      income: "",
+      filingStatus: "single",
+      standardDeduction: true,
+      itemizedAmount: "",
     }
+  );
+  const { income, filingStatus, standardDeduction, itemizedAmount } = state;
+  const [showBrackets, setShowBrackets] = useState(false);
 
-    return { total: tax, breakdown };
-  };
+  const { federalBrackets, oregonBrackets } = useTaxBrackets();
 
   const calculations = useMemo(() => {
     const grossIncome = Number.parseFloat(income) || 0;
@@ -90,13 +52,6 @@ const LLCTaxCalculator = () => {
           federal: Number.parseFloat(itemizedAmount) || 0,
           oregon: Number.parseFloat(itemizedAmount) || 0,
         };
-
-    // Federal calculations
-    const federalTaxableIncome = Math.max(0, grossIncome - deductions.federal);
-    const federalIncomeTax = calculateTax(
-      federalTaxableIncome,
-      federalBrackets[filingStatus]
-    );
 
     // Self-employment tax (15.3% on 92.35% of SE income)
     const seTaxableIncome = grossIncome * 0.9235;
@@ -120,7 +75,7 @@ const LLCTaxCalculator = () => {
     );
     const oregonIncomeTax = calculateTax(
       oregonTaxableIncome,
-      oregonBrackets[filingStatus]
+      oregonBrackets // oregonBrackets is now an array from context
     );
 
     const totalFederalTax = adjustedFederalTax.total + seTax;
@@ -143,31 +98,42 @@ const LLCTaxCalculator = () => {
       federalBreakdown: adjustedFederalTax.breakdown,
       oregonBreakdown: oregonIncomeTax.breakdown,
     };
-  }, [income, filingStatus, standardDeduction, itemizedAmount]);
-
-  const formatCurrency = (amount) => {
-    return new Intl.NumberFormat("en-US", {
-      style: "currency",
-      currency: "USD",
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0,
-    }).format(amount);
-  };
+  }, [
+    income,
+    filingStatus,
+    standardDeduction,
+    itemizedAmount,
+    federalBrackets,
+    oregonBrackets,
+  ]);
 
   return (
     <div className="bg-white rounded-lg shadow-lg p-6 mb-6">
       <div className="mb-8">
-        <div className="flex items-center gap-3 mb-4">
-          <Calculator className="w-8 h-8 text-blue-600" />
-          <h1 className="text-3xl font-bold text-gray-900">
-            LLC Passthrough Tax Calculator
-          </h1>
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center gap-3 mb-4">
+            <Calculator className="w-8 h-8 text-blue-600" />
+            <h1 className="text-3xl font-bold text-gray-900">
+              LLC Passthrough Tax Calculator
+            </h1>
+          </div>
+          <button
+            type="button"
+            onClick={() => setShowBrackets((prev) => !prev)}
+            className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+          >
+            <BarChart3 className="w-4 h-4" />
+            {showBrackets ? "Hide" : "Show"} Tax Brackets
+          </button>
         </div>
-        <p className="text-gray-600">
-          Calculate your federal and Oregon tax liability on LLC passthrough
-          income (2024 tax year)
-        </p>
       </div>
+
+      {showBrackets && (
+        <EditTaxBrackets
+          filingStatus={filingStatus}
+          totalIncome={calculations?.grossIncome || 0}
+        />
+      )}
 
       <div className="grid md:grid-cols-2 gap-8">
         {/* Input Section */}
@@ -179,44 +145,45 @@ const LLCTaxCalculator = () => {
             </h2>
 
             <div className="space-y-4">
+              <InputField
+                id="income"
+                label="Taxable LLC Income"
+                value={income}
+                onChange={(e) => setState({ income: e.target.value })}
+                placeholder="Enter your taxable income"
+                type="number"
+              />
+
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Taxable LLC Income
-                </label>
-                <input
-                  type="number"
-                  value={income}
-                  onChange={(e) => setIncome(e.target.value)}
-                  placeholder="Enter your taxable income"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                <SelectField
+                  id="filingStatus"
+                  label="Filing Status"
+                  value={filingStatus}
+                  onChange={(e) =>
+                    setState({ filingStatus: e.target.value as FilingStatus })
+                  }
+                  options={Object.keys(standardDeductions).map((status) => ({
+                    value: status,
+                    label:
+                      status === "single" ? "Single" : "Married Filing Jointly",
+                  }))}
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Filing Status
-                </label>
-                <select
-                  value={filingStatus}
-                  onChange={(e) => setFilingStatus(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                <label
+                  htmlFor="deductionType"
+                  className="block text-sm font-medium text-gray-700 mb-2"
                 >
-                  <option value="single">Single</option>
-                  <option value="marriedJoint">Married Filing Jointly</option>
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
                   Deduction Type
                 </label>
-                <div className="space-y-2">
+                <div id="deductionType" className="space-y-2">
                   <label className="flex items-center">
                     <input
                       type="radio"
                       name="deductionType"
                       checked={standardDeduction}
-                      onChange={() => setStandardDeduction(true)}
+                      onChange={() => setState({ standardDeduction: true })}
                       className="mr-2"
                     />
                     <span className="text-sm">
@@ -231,7 +198,7 @@ const LLCTaxCalculator = () => {
                       type="radio"
                       name="deductionType"
                       checked={!standardDeduction}
-                      onChange={() => setStandardDeduction(false)}
+                      onChange={() => setState({ standardDeduction: false })}
                       className="mr-2"
                     />
                     <span className="text-sm">Itemized Deductions</span>
@@ -239,12 +206,15 @@ const LLCTaxCalculator = () => {
                 </div>
 
                 {!standardDeduction && (
-                  <input
-                    type="number"
+                  <InputField
+                    id="itemizedAmount"
+                    label="Itemized Deduction Amount"
                     value={itemizedAmount}
-                    onChange={(e) => setItemizedAmount(e.target.value)}
+                    onChange={(e) =>
+                      setState({ itemizedAmount: e.target.value })
+                    }
                     placeholder="Enter itemized deduction amount"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 mt-2"
+                    type="number"
                   />
                 )}
               </div>
@@ -325,6 +295,7 @@ const LLCTaxCalculator = () => {
                   </h4>
                   <div className="text-sm space-y-1">
                     {calculations.federalBreakdown.map((bracket, index) => (
+                      // eslint-disable-next-line react/no-array-index-key
                       <div key={index} className="flex justify-between">
                         <span className="text-gray-600">
                           {bracket.range} ({bracket.rate}):
@@ -341,6 +312,7 @@ const LLCTaxCalculator = () => {
                   </h4>
                   <div className="text-sm space-y-1">
                     {calculations.oregonBreakdown.map((bracket, index) => (
+                      // eslint-disable-next-line react/no-array-index-key
                       <div key={index} className="flex justify-between">
                         <span className="text-gray-600">
                           {bracket.range} ({bracket.rate}):
