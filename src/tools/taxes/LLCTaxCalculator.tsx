@@ -6,6 +6,7 @@ import {
   TrendingUp,
 } from "lucide-react";
 import { useMemo, useState } from "react";
+import { EditTaxBrackets } from "./EditTaxBrackets";
 import { useTaxBrackets } from "./TaxBracketContext";
 import { InputField, SelectField } from "./TaxFormFields";
 import { type FilingStatus, calculateTax, formatCurrency } from "./taxUtils";
@@ -111,12 +112,14 @@ const LLCTaxCalculator = () => {
             {showBrackets ? "Hide" : "Show"} Tax Brackets
           </button>
         </div>
-
-        <p className="text-gray-600">
-          Calculate your federal and Oregon tax liability on LLC passthrough
-          income (2024 tax year)
-        </p>
       </div>
+
+      {showBrackets && (
+        <EditTaxBrackets
+          filingStatus={filingStatus}
+          totalIncome={calculations?.grossIncome || 0}
+        />
+      )}
 
       <div className="grid md:grid-cols-2 gap-8">
         {/* Input Section */}
@@ -312,70 +315,6 @@ const LLCTaxCalculator = () => {
           )}
         </div>
       </div>
-
-      {showBrackets && (
-        <div className="bg-gray-50 p-4 rounded-lg mb-6">
-          <h2 className="text-lg font-semibold text-gray-900 mb-2 flex items-center gap-2">
-            <BarChart3 className="w-5 h-5 text-gray-600" />
-            Tax Brackets
-          </h2>
-          <div className="grid md:grid-cols-2 gap-6">
-            <div>
-              <h4 className="font-medium text-gray-700 mb-2">
-                Federal Tax Brackets{" "}
-                {filingStatus === "marriedJoint"
-                  ? "(Married Filing Jointly)"
-                  : "(Single)"}
-              </h4>
-              <div className="space-y-1">
-                {federalBrackets[filingStatus].map((bracket, index) => (
-                  // eslint-disable-next-line react/no-array-index-key
-                  <div key={index} className="flex justify-between text-sm">
-                    <span>
-                      $
-                      {typeof bracket.min === "number"
-                        ? bracket.min.toLocaleString()
-                        : 0}{" "}
-                      -{" "}
-                      {typeof bracket.max === "number"
-                        ? bracket.max === Number.POSITIVE_INFINITY
-                          ? "∞"
-                          : `$${bracket.max.toLocaleString()}`
-                        : "-"}{" "}
-                      @ {(bracket.rate * 100).toFixed(2)}%
-                    </span>
-                  </div>
-                ))}
-              </div>
-            </div>
-            <div>
-              <h4 className="font-medium text-gray-700 mb-2">
-                Oregon Tax Brackets
-              </h4>
-              <div className="space-y-1">
-                {oregonBrackets.map((bracket, index) => (
-                  // eslint-disable-next-line react/no-array-index-key
-                  <div key={index} className="flex justify-between text-sm">
-                    <span>
-                      $
-                      {typeof bracket.min === "number"
-                        ? bracket.min.toLocaleString()
-                        : 0}{" "}
-                      -{" "}
-                      {typeof bracket.max === "number"
-                        ? bracket.max === Number.POSITIVE_INFINITY
-                          ? "∞"
-                          : `$${bracket.max.toLocaleString()}`
-                        : "-"}{" "}
-                      @ {(bracket.rate * 100).toFixed(2)}%
-                    </span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
 
       <div className="mt-8 p-4 bg-yellow-50 rounded-lg">
         <h3 className="font-semibold text-yellow-800 mb-2">Important Notes:</h3>
