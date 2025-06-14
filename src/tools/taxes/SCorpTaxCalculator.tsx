@@ -21,6 +21,7 @@ const SCorpTaxCalculator = () => {
     priorYearTax: 0,
     filingStatus: "single", // single, marriedJoint, marriedSeparate
     commercialActivity: 150000, // for CAT tax
+    taxDeductions: 15000, // for federal and state deductions
   });
 
   const [showBrackets, setShowBrackets] = useState(false);
@@ -45,13 +46,13 @@ const SCorpTaxCalculator = () => {
   // Federal tax brackets 2024 (updated for 2025 would be similar)
   const [federalBrackets, setFederalBrackets] = useState({
     single: [
-      { min: 0, max: 11600, rate: 0.1 },
-      { min: 11600, max: 47150, rate: 0.12 },
-      { min: 47150, max: 100525, rate: 0.22 },
-      { min: 100525, max: 191650, rate: 0.24 },
-      { min: 191650, max: 243725, rate: 0.32 },
-      { min: 243725, max: 609350, rate: 0.35 },
-      { min: 609350, max: Number.POSITIVE_INFINITY, rate: 0.37 },
+      { min: 0, max: 11925, rate: 0.1 },
+      { min: 11925, max: 48474, rate: 0.12 },
+      { min: 48474, max: 103349, rate: 0.22 },
+      { min: 103349, max: 197299, rate: 0.24 },
+      { min: 197299, max: 250524, rate: 0.32 },
+      { min: 250524, max: 626349, rate: 0.35 },
+      { min: 626349, max: Number.POSITIVE_INFINITY, rate: 0.37 },
     ],
     marriedJoint: [
       { min: 0, max: 23200, rate: 0.1 },
@@ -75,11 +76,8 @@ const SCorpTaxCalculator = () => {
 
   // Oregon tax brackets 2024
   const [oregonBrackets, setOregonBrackets] = useState([
-    { min: 0, max: 4300, rate: 0.0475 },
-    { min: 4300, max: 10750, rate: 0.0675 },
-    { min: 10750, max: 26900, rate: 0.0875 },
-    { min: 26900, max: 67700, rate: 0.0975 },
-    { min: 67700, max: 125000, rate: 0.1075 },
+    { min: 0, max: 50000, rate: 0.08146 },
+    { min: 50000, max: 125000, rate: 0.0875 },
     { min: 125000, max: Number.POSITIVE_INFINITY, rate: 0.099 },
   ]);
 
@@ -137,7 +135,7 @@ const SCorpTaxCalculator = () => {
     const oregonTransit = inputs.salary * payrollRates.oregonTransit;
 
     // Total income for tax purposes
-    const totalIncome = inputs.salary + businessProfit;
+    const totalIncome = inputs.salary + businessProfit - inputs.taxDeductions;
 
     // Federal income tax
     const federalTax = calculateTax(
@@ -795,6 +793,17 @@ const SCorpTaxCalculator = () => {
                   onChange={(e) =>
                     updateInput("homeOfficeDeduction", e.target.value)
                   }
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Standard or Itemized Deductions
+                </label>
+                <input
+                  type="number"
+                  value={inputs.taxDeductions}
+                  onChange={(e) => updateInput("taxDeductions", e.target.value)}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
