@@ -9,6 +9,13 @@ import {
   Users,
 } from "lucide-react";
 import { useMemo, useState } from "react";
+import { useTaxBrackets } from "./TaxBracketContext";
+import {
+  type FilingStatus,
+  type TaxBracket,
+  calculateTax,
+  formatCurrency,
+} from "./taxUtils";
 
 const SCorpTaxCalculator = () => {
   const [inputs, setInputs] = useState({
@@ -19,7 +26,7 @@ const SCorpTaxCalculator = () => {
     retirementContribution: 5000,
     homeOfficeDeduction: 2000,
     priorYearTax: 0,
-    filingStatus: "single", // single, marriedJoint, marriedSeparate
+    filingStatus: "single" as FilingStatus, // single, marriedJoint, marriedSeparate
     commercialActivity: 150000, // for CAT tax
     taxDeductions: 15000, // for federal and state deductions
   });
@@ -44,56 +51,12 @@ const SCorpTaxCalculator = () => {
   });
 
   // Federal tax brackets 2024 (updated for 2025 would be similar)
-  const [federalBrackets, setFederalBrackets] = useState({
-    single: [
-      { min: 0, max: 11925, rate: 0.1 },
-      { min: 11925, max: 48474, rate: 0.12 },
-      { min: 48474, max: 103349, rate: 0.22 },
-      { min: 103349, max: 197299, rate: 0.24 },
-      { min: 197299, max: 250524, rate: 0.32 },
-      { min: 250524, max: 626349, rate: 0.35 },
-      { min: 626349, max: Number.POSITIVE_INFINITY, rate: 0.37 },
-    ],
-    marriedJoint: [
-      { min: 0, max: 23200, rate: 0.1 },
-      { min: 23200, max: 94300, rate: 0.12 },
-      { min: 94300, max: 201050, rate: 0.22 },
-      { min: 201050, max: 383900, rate: 0.24 },
-      { min: 383900, max: 487450, rate: 0.32 },
-      { min: 487450, max: 731200, rate: 0.35 },
-      { min: 731200, max: Number.POSITIVE_INFINITY, rate: 0.37 },
-    ],
-  });
-
-  const formatCurrency = (amount) => {
-    return new Intl.NumberFormat("en-US", {
-      style: "currency",
-      currency: "USD",
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0,
-    }).format(amount);
-  };
-
-  // Oregon tax brackets 2024
-  const [oregonBrackets, setOregonBrackets] = useState([
-    { min: 0, max: 50000, rate: 0.08146 },
-    { min: 50000, max: 125000, rate: 0.0875 },
-    { min: 125000, max: Number.POSITIVE_INFINITY, rate: 0.099 },
-  ]);
-
-  const calculateTax = (income, brackets) => {
-    let tax = 0;
-    for (const bracket of brackets) {
-      if (income > bracket.min) {
-        const taxableInBracket = Math.min(
-          income - bracket.min,
-          bracket.max - bracket.min
-        );
-        tax += taxableInBracket * bracket.rate;
-      }
-    }
-    return tax;
-  };
+  const {
+    federalBrackets,
+    setFederalBrackets,
+    oregonBrackets,
+    setOregonBrackets,
+  } = useTaxBrackets();
 
   const calculations = useMemo(() => {
     // Business profit calculation
@@ -827,7 +790,7 @@ const SCorpTaxCalculator = () => {
                   onChange={(e) =>
                     setInputs((prev) => ({
                       ...prev,
-                      filingStatus: e.target.value,
+                      filingStatus: e.target.value as FilingStatus,
                     }))
                   }
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -931,11 +894,11 @@ const SCorpTaxCalculator = () => {
                 <div className="text-xs text-gray-600 space-y-1">
                   <div className="flex justify-between">
                     <span>Federal Income Tax:</span>
-                    <span>{formatCurrency(calculations.federalTax)}</span>
+                    <span>{formatCurrency(calculations.federalTax.total)}</span>
                   </div>
                   <div className="flex justify-between">
                     <span>Oregon Income Tax:</span>
-                    <span>{formatCurrency(calculations.oregonTax)}</span>
+                    <span>{formatCurrency(calculations.oregonTax.total)}</span>
                   </div>
                   {calculations.catTax > 0 && (
                     <div className="flex justify-between">
