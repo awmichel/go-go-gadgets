@@ -1,22 +1,6 @@
 import { useState } from "react";
 
-export function useLocalStorageState<T>(
-  key: string,
-  defaultValue: T
-): [T, (v: T) => void] {
-  const [state, setState] = useState<T>(() => {
-    const saved = localStorage.getItem(key);
-    if (saved) {
-      try {
-        return JSON.parse(saved);
-      } catch {}
-    }
-    return defaultValue;
-  });
-  return [state, setState];
-}
-
-export function useLocalStorageStates<T extends Record<string, any>>(
+export function useLocalStorageState<T extends Record<string, unknown>>(
   key: string,
   defaults: T
 ): [T, (v: Partial<T>) => void] {

@@ -11,7 +11,7 @@ import { EditTaxBrackets } from "./EditTaxBrackets";
 import { useTaxBrackets } from "./TaxBracketContext";
 import { InputField, SelectField } from "./TaxFormFields";
 import { type FilingStatus, calculateTax, formatCurrency } from "./taxUtils";
-import { useLocalStorageStates } from "./useLocalStorageState";
+import { useLocalStorageState } from "./useLocalStorageState";
 
 // Add standardDeductions definition for SCorpTaxCalculator
 const standardDeductions: Record<
@@ -38,7 +38,7 @@ type SCorpCalculatorState = {
 
 const SCorpTaxCalculator = () => {
   // Replace all useState for inputs, deductionType, itemizedAmount with useLocalStorageStates
-  const [state, setState] = useLocalStorageStates<SCorpCalculatorState>(
+  const [state, setState] = useLocalStorageState<SCorpCalculatorState>(
     "scorpInputs",
     {
       revenue: 150000,

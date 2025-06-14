@@ -20,18 +20,24 @@ const standardDeductions: Record<
   marriedJoint: { federal: 29200, oregon: 5540 },
 };
 
+type LLCCalculatorState = {
+  income: string;
+  filingStatus: FilingStatus;
+  standardDeduction: boolean;
+  itemizedAmount: string;
+};
+
 const LLCTaxCalculator = () => {
-  const [income, setIncome] = useLocalStorageState<string>("llc_income", "");
-  const [filingStatus, setFilingStatus] = useLocalStorageState<FilingStatus>(
-    "llc_filingStatus",
-    "single"
+  const [state, setState] = useLocalStorageState<LLCCalculatorState>(
+    "llcInputs",
+    {
+      income: "",
+      filingStatus: "single",
+      standardDeduction: true,
+      itemizedAmount: "",
+    }
   );
-  const [standardDeduction, setStandardDeduction] =
-    useLocalStorageState<boolean>("llc_standardDeduction", true);
-  const [itemizedAmount, setItemizedAmount] = useLocalStorageState<string>(
-    "llc_itemizedAmount",
-    ""
-  );
+  const { income, filingStatus, standardDeduction, itemizedAmount } = state;
   const [showBrackets, setShowBrackets] = useState(false);
 
   const { federalBrackets, oregonBrackets } = useTaxBrackets();
@@ -143,7 +149,7 @@ const LLCTaxCalculator = () => {
                 id="income"
                 label="Taxable LLC Income"
                 value={income}
-                onChange={(e) => setIncome(e.target.value)}
+                onChange={(e) => setState({ income: e.target.value })}
                 placeholder="Enter your taxable income"
                 type="number"
               />
@@ -160,12 +166,13 @@ const LLCTaxCalculator = () => {
                   label="Filing Status"
                   value={filingStatus}
                   onChange={(e) =>
-                    setFilingStatus(e.target.value as FilingStatus)
+                    setState({ filingStatus: e.target.value as FilingStatus })
                   }
-                  options={[
-                    { value: "single", label: "Single" },
-                    { value: "marriedJoint", label: "Married Filing Jointly" },
-                  ]}
+                  options={Object.keys(standardDeductions).map((status) => ({
+                    value: status,
+                    label:
+                      status === "single" ? "Single" : "Married Filing Jointly",
+                  }))}
                 />
               </div>
 
@@ -182,7 +189,7 @@ const LLCTaxCalculator = () => {
                       type="radio"
                       name="deductionType"
                       checked={standardDeduction}
-                      onChange={() => setStandardDeduction(true)}
+                      onChange={() => setState({ standardDeduction: true })}
                       className="mr-2"
                     />
                     <span className="text-sm">
@@ -197,20 +204,41 @@ const LLCTaxCalculator = () => {
                       type="radio"
                       name="deductionType"
                       checked={!standardDeduction}
-                      onChange={() => setStandardDeduction(false)}
+                      onChange={() => setState({ standardDeduction: false })}
                       className="mr-2"
                     />
                     <span className="text-sm">Itemized Deductions</span>
                   </label>
                 </div>
 
-                {!standardDeduction && (
+                <div className="flex items-center mt-2">
                   <input
-                    type="number"
+                    id="standardDeduction"
+                    type="checkbox"
+                    checked={standardDeduction}
+                    onChange={(e) =>
+                      setState({ standardDeduction: e.target.checked })
+                    }
+                    className="mr-2"
+                  />
+                  <label
+                    htmlFor="standardDeduction"
+                    className="text-sm text-gray-700"
+                  >
+                    Use Standard Deduction
+                  </label>
+                </div>
+
+                {!standardDeduction && (
+                  <InputField
+                    id="itemizedAmount"
+                    label="Itemized Deduction Amount"
                     value={itemizedAmount}
-                    onChange={(e) => setItemizedAmount(e.target.value)}
+                    onChange={(e) =>
+                      setState({ itemizedAmount: e.target.value })
+                    }
                     placeholder="Enter itemized deduction amount"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 mt-2"
+                    type="number"
                   />
                 )}
               </div>
