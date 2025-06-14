@@ -9,4 +9,7 @@ export default defineConfig({
     assetPrefix: "/go-go-gadgets/",
   },
   plugins: [pluginReact()],
+  server: {
+    open: false,
+  },
 });
