@@ -155,12 +155,6 @@ const LLCTaxCalculator = () => {
               />
 
               <div>
-                <label
-                  htmlFor="filingStatus"
-                  className="block text-sm font-medium text-gray-700 mb-1"
-                >
-                  Filing Status
-                </label>
                 <SelectField
                   id="filingStatus"
                   label="Filing Status"
@@ -208,24 +202,6 @@ const LLCTaxCalculator = () => {
                       className="mr-2"
                     />
                     <span className="text-sm">Itemized Deductions</span>
-                  </label>
-                </div>
-
-                <div className="flex items-center mt-2">
-                  <input
-                    id="standardDeduction"
-                    type="checkbox"
-                    checked={standardDeduction}
-                    onChange={(e) =>
-                      setState({ standardDeduction: e.target.checked })
-                    }
-                    className="mr-2"
-                  />
-                  <label
-                    htmlFor="standardDeduction"
-                    className="text-sm text-gray-700"
-                  >
-                    Use Standard Deduction
                   </label>
                 </div>
 
