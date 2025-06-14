@@ -332,9 +332,11 @@ const LLCTaxCalculator = () => {
                   // eslint-disable-next-line react/no-array-index-key
                   <div key={index} className="flex justify-between text-sm">
                     <span>
-                      ${typeof bracket.min === "number"
+                      $
+                      {typeof bracket.min === "number"
                         ? bracket.min.toLocaleString()
-                        : 0} -{" "}
+                        : 0}{" "}
+                      -{" "}
                       {typeof bracket.max === "number"
                         ? bracket.max === Number.POSITIVE_INFINITY
                           ? "∞"
@@ -355,9 +357,11 @@ const LLCTaxCalculator = () => {
                   // eslint-disable-next-line react/no-array-index-key
                   <div key={index} className="flex justify-between text-sm">
                     <span>
-                      ${typeof bracket.min === "number"
+                      $
+                      {typeof bracket.min === "number"
                         ? bracket.min.toLocaleString()
-                        : 0} -{" "}
+                        : 0}{" "}
+                      -{" "}
                       {typeof bracket.max === "number"
                         ? bracket.max === Number.POSITIVE_INFINITY
                           ? "∞"
