@@ -1,4 +1,4 @@
-import { Menu, Search, Wrench, X } from "lucide-react";
+import { AlertTriangle, Menu, Search, Wrench, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { type Categories, type Tool, categories, tools } from "./tools";
 
@@ -10,6 +10,9 @@ const App = () => {
   const [activeTool, setActiveTool] = useState<Tool | null>(null);
   const [isScrolled, setIsScrolled] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
+  const [showDisclaimer, setShowDisclaimer] = useState(() => {
+    return sessionStorage.getItem("disclaimerDismissed") !== "true";
+  });
 
   useEffect(() => {
     const handleScroll = () => {
@@ -18,6 +21,12 @@ const App = () => {
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
+
+  useEffect(() => {
+    if (!showDisclaimer) {
+      sessionStorage.setItem("disclaimerDismissed", "true");
+    }
+  }, [showDisclaimer]);
 
   const filteredTools = tools.filter((tool) => {
     const matchesCategory =
@@ -236,6 +245,33 @@ const App = () => {
           )}
         </main>
       </div>
+
+      {/* Disclaimer Banner */}
+      {showDisclaimer && (
+        <div className="fixed top-0 left-0 w-full z-50 flex justify-center">
+          <div className="bg-yellow-200 text-yellow-900 border border-yellow-400 rounded-b-lg shadow-lg px-6 py-4 flex items-center gap-3 max-w-2xl mt-2 animate-fade-in">
+            <AlertTriangle className="w-6 h-6 text-yellow-700 flex-shrink-0" />
+            <div className="text-sm font-medium">
+              I am not an accountant, lawyer, or professional giving any sort of
+              advice. I do not claim these tools to be accurate in any
+              defensible way. They were created merely to scratch an itch and
+              help me make more informed decisions. Please, do not use AI or
+              AI-generated tools in place of experienced and professional human
+              beings who have dedicated years of their lives to offering advice
+              relevant to individual and nuanced circumstances. You've been
+              warned...there be dragons.
+            </div>
+            <button
+              type="button"
+              onClick={() => setShowDisclaimer(false)}
+              className="ml-4 text-yellow-900 hover:text-yellow-700 font-bold text-lg focus:outline-none"
+              aria-label="Dismiss disclaimer"
+            >
+              ×
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
