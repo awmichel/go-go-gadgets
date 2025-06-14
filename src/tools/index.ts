@@ -1,5 +1,6 @@
 import { Calculator, type LucideIcon, Settings } from "lucide-react";
 import type { ComponentType } from "react";
+import LLCTaxCalculator from "./taxes/LLCTaxCalculator";
 import SCorpTaxCalculator from "./taxes/SCorpTaxCalculator";
 
 export enum Categories {
@@ -25,6 +26,15 @@ export const tools: Tool[] = [
     color: "from-blue-600 to-blue-400",
     description: "Calculate S-Corp taxes with ease",
     Component: SCorpTaxCalculator,
+  },
+  {
+    id: "llc-tax-calculator",
+    name: "LLC Tax Calculator",
+    category: Categories.CALCULATORS,
+    icon: Calculator,
+    color: "from-green-600 to-green-400",
+    description: "Calculate LLC taxes with ease",
+    Component: LLCTaxCalculator,
   },
 ];
 
