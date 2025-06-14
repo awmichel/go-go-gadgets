@@ -5,5 +5,8 @@ export default defineConfig({
   html: {
     title: "Go Go Gadgets",
   },
+  output: {
+    assetPrefix: "/go-go-gadgets/",
+  },
   plugins: [pluginReact()],
 });
