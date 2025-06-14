@@ -295,7 +295,7 @@ const LLCTaxCalculator = () => {
                   </h4>
                   <div className="text-sm space-y-1">
                     {calculations.federalBreakdown.map((bracket, index) => (
-                      // eslint-disable-next-line react/no-array-index-key
+                      // biome-ignore lint/suspicious/noArrayIndexKey: this is the best we got
                       <div key={index} className="flex justify-between">
                         <span className="text-gray-600">
                           {bracket.range} ({bracket.rate}):
@@ -312,7 +312,7 @@ const LLCTaxCalculator = () => {
                   </h4>
                   <div className="text-sm space-y-1">
                     {calculations.oregonBreakdown.map((bracket, index) => (
-                      // eslint-disable-next-line react/no-array-index-key
+                      // biome-ignore lint/suspicious/noArrayIndexKey: this is the best we got
                       <div key={index} className="flex justify-between">
                         <span className="text-gray-600">
                           {bracket.range} ({bracket.rate}):

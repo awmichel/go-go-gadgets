@@ -43,6 +43,11 @@ const App = () => {
         <div
           className="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden"
           onClick={() => setIsDrawerOpen(false)}
+          onKeyUp={(e) => {
+            if (e.key === "Escape") {
+              setIsDrawerOpen(false);
+            }
+          }}
         />
       )}
 
@@ -64,6 +69,7 @@ const App = () => {
               </div>
             </div>
             <button
+              type="button"
               onClick={() => setIsDrawerOpen(false)}
               className="lg:hidden p-2 hover:bg-slate-700 rounded-lg transition-colors"
             >
@@ -90,6 +96,7 @@ const App = () => {
               return (
                 <button
                   key={category.id}
+                  type="button"
                   onClick={() => setSelectedCategory(category.id)}
                   className={`w-full flex items-center justify-between p-3 rounded-xl transition-all duration-200 group ${
                     selectedCategory === category.id
@@ -119,6 +126,7 @@ const App = () => {
               return (
                 <button
                   key={tool.id}
+                  type="button"
                   onClick={() => setActiveTool(tool)}
                   className={`w-full flex items-center space-x-3 p-3 rounded-xl transition-all duration-200 group ${
                     activeTool?.id === tool.id
@@ -163,6 +171,7 @@ const App = () => {
           <div className="flex items-center justify-between p-6">
             <div className="flex items-center space-x-4">
               <button
+                type="button"
                 onClick={() => setIsDrawerOpen(true)}
                 className="lg:hidden p-2 hover:bg-slate-700 rounded-lg transition-colors"
               >
@@ -204,6 +213,7 @@ const App = () => {
                   return (
                     <button
                       key={tool.id}
+                      type="button"
                       onClick={() => setActiveTool(tool)}
                       className="group bg-slate-800/50 backdrop-blur-sm p-6 rounded-2xl border border-slate-700 hover:border-slate-600 transition-all duration-300 hover:scale-105 hover:shadow-xl text-left"
                     >

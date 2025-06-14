@@ -47,7 +47,12 @@ export const tools: Tool[] = [
   },
 ];
 
-export const categories = [
+export const categories: {
+  id: Categories | "all";
+  name: string;
+  icon: LucideIcon;
+  count: number;
+}[] = [
   { id: "all", name: "All Gadgets", icon: Settings, count: tools.length },
   {
     id: Categories.CALCULATORS,
