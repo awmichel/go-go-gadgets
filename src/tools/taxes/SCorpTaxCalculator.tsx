@@ -3,16 +3,15 @@ import {
   Calculator,
   DollarSign,
   FileText,
-  Minus,
-  Plus,
   TrendingUp,
   Users,
 } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { EditTaxBrackets } from "./EditTaxBrackets";
 import { useTaxBrackets } from "./TaxBracketContext";
 import { InputField, SelectField } from "./TaxFormFields";
 import { type FilingStatus, calculateTax, formatCurrency } from "./taxUtils";
+import { useLocalStorageStates } from "./useLocalStorageState";
 
 // Add standardDeductions definition for SCorpTaxCalculator
 const standardDeductions: Record<
@@ -23,18 +22,38 @@ const standardDeductions: Record<
   marriedJoint: { federal: 29200 },
 };
 
+type SCorpCalculatorState = {
+  revenue: number;
+  salary: number;
+  businessExpenses: number;
+  healthInsurance: number;
+  retirementContribution: number;
+  homeOfficeDeduction: number;
+  priorYearTax: number;
+  filingStatus: FilingStatus;
+  commercialActivity: number;
+  deductionType: "standard" | "itemized";
+  itemizedAmount: string; // Use string to handle empty input
+};
+
 const SCorpTaxCalculator = () => {
-  const [inputs, setInputs] = useState({
-    revenue: 150000,
-    salary: 60000,
-    businessExpenses: 20000,
-    healthInsurance: 6000,
-    retirementContribution: 5000,
-    homeOfficeDeduction: 2000,
-    priorYearTax: 0,
-    filingStatus: "single" as FilingStatus, // single, marriedJoint, marriedSeparate
-    commercialActivity: 150000, // for CAT tax
-  });
+  // Replace all useState for inputs, deductionType, itemizedAmount with useLocalStorageStates
+  const [state, setState] = useLocalStorageStates<SCorpCalculatorState>(
+    "scorpInputs",
+    {
+      revenue: 150000,
+      salary: 60000,
+      businessExpenses: 20000,
+      healthInsurance: 6000,
+      retirementContribution: 5000,
+      homeOfficeDeduction: 2000,
+      priorYearTax: 0,
+      filingStatus: "single",
+      commercialActivity: 150000,
+      deductionType: "standard",
+      itemizedAmount: "",
+    }
+  );
 
   const [showBrackets, setShowBrackets] = useState(false);
   const [showPayrollRates, setShowPayrollRates] = useState(false);
@@ -56,79 +75,68 @@ const SCorpTaxCalculator = () => {
   });
 
   // Federal tax brackets 2024 (updated for 2025 would be similar)
-  const {
-    federalBrackets,
-    setFederalBrackets,
-    oregonBrackets,
-    setOregonBrackets,
-  } = useTaxBrackets();
-
-  // Add deduction type logic and UI (standard/itemized) similar to LLC
-  const [deductionType, setDeductionType] = useState<"standard" | "itemized">(
-    "standard"
-  );
-  const [itemizedAmount, setItemizedAmount] = useState("");
+  const { federalBrackets, oregonBrackets } = useTaxBrackets();
 
   const calculations = useMemo(() => {
     // Business profit calculation
     const employerPayrollTaxes =
-      Math.min(inputs.salary, payrollRates.socialSecurityWageBase) *
+      Math.min(state.salary, payrollRates.socialSecurityWageBase) *
         payrollRates.socialSecurityEmployer +
-      inputs.salary * payrollRates.medicareEmployer;
+      state.salary * payrollRates.medicareEmployer;
     const futa = Math.min(
-      inputs.salary * payrollRates.futa,
+      state.salary * payrollRates.futa,
       payrollRates.futaWageBase * payrollRates.futa
     );
-    const suta = inputs.salary * payrollRates.suta;
+    const suta = state.salary * payrollRates.suta;
 
     const totalBusinessExpenses =
-      inputs.businessExpenses +
-      inputs.healthInsurance +
-      inputs.retirementContribution +
-      inputs.homeOfficeDeduction +
+      state.businessExpenses +
+      state.healthInsurance +
+      state.retirementContribution +
+      state.homeOfficeDeduction +
       employerPayrollTaxes +
       futa +
       suta;
 
     const businessProfit = Math.max(
       0,
-      inputs.revenue - inputs.salary - totalBusinessExpenses
+      state.revenue - state.salary - totalBusinessExpenses
     );
 
     // Employee payroll taxes
     const socialSecurityEmployee =
-      Math.min(inputs.salary, payrollRates.socialSecurityWageBase) *
+      Math.min(state.salary, payrollRates.socialSecurityWageBase) *
       payrollRates.socialSecurityEmployee;
-    const medicareEmployee = inputs.salary * payrollRates.medicareEmployee;
+    const medicareEmployee = state.salary * payrollRates.medicareEmployee;
     const medicareeSurtax = Math.max(
       0,
-      (inputs.salary - payrollRates.medicareSurtaxThreshold) *
+      (state.salary - payrollRates.medicareSurtaxThreshold) *
         payrollRates.medicareSurtaxRate
     );
-    const oregonPaidLeave = inputs.salary * payrollRates.oregonPaidLeave;
-    const oregonTransit = inputs.salary * payrollRates.oregonTransit;
+    const oregonPaidLeave = state.salary * payrollRates.oregonPaidLeave;
+    const oregonTransit = state.salary * payrollRates.oregonTransit;
 
     // Total income for tax purposes
     const deductionValue =
-      deductionType === "standard"
+      state.deductionType === "standard"
         ? standardDeductions[
-            inputs.filingStatus === "marriedJoint" ? "marriedJoint" : "single"
+            state.filingStatus === "marriedJoint" ? "marriedJoint" : "single"
           ].federal
-        : Number.parseFloat(itemizedAmount) || 0;
+        : Number.parseFloat(state.itemizedAmount) || 0;
 
-    const totalIncome = inputs.salary + businessProfit - deductionValue;
+    const totalIncome = state.salary + businessProfit - deductionValue;
 
     // Federal income tax
     const federalTax = calculateTax(
       totalIncome,
-      federalBrackets[inputs.filingStatus] || federalBrackets.single
+      federalBrackets[state.filingStatus] || federalBrackets.single
     );
 
     // Oregon income tax
     const oregonTax = calculateTax(totalIncome, oregonBrackets);
 
     // Oregon CAT tax
-    const catTax = Math.max(0, (inputs.commercialActivity - 1000000) * 0.0057);
+    const catTax = Math.max(0, (state.commercialActivity - 1000000) * 0.0057);
 
     // Total taxes
     const totalPayrollTaxes =
@@ -147,7 +155,7 @@ const SCorpTaxCalculator = () => {
     // Quarterly payment calculation
     const requiredQuarterly = Math.max(
       (totalTaxes - totalPayrollTaxes) / 4, // Current year estimate
-      (inputs.priorYearTax * 1.1) / 4 // 110% safe harbor
+      (state.priorYearTax * 1.1) / 4 // 110% safe harbor
     );
 
     return {
@@ -172,18 +180,11 @@ const SCorpTaxCalculator = () => {
       requiredQuarterly,
       totalBusinessExpenses,
     };
-  }, [
-    inputs,
-    federalBrackets,
-    oregonBrackets,
-    payrollRates,
-    deductionType,
-    itemizedAmount,
-  ]);
+  }, [state, federalBrackets, oregonBrackets, payrollRates]);
 
   // Add type annotations for function parameters to resolve implicit any warnings
   const updateInput = (field: string, value: string) => {
-    setInputs((prev) => ({ ...prev, [field]: Number.parseFloat(value) || 0 }));
+    setState({ ...state, [field]: Number.parseFloat(value) || 0 });
   };
 
   const updatePayrollRate = (field: string, value: string) => {
@@ -461,6 +462,11 @@ const SCorpTaxCalculator = () => {
     );
   };
 
+  // Save inputs to localStorage on change
+  useEffect(() => {
+    localStorage.setItem("scorpInputs", JSON.stringify(state));
+  }, [state]);
+
   return (
     <div className="bg-white rounded-lg shadow-lg p-6 mb-6">
       <div className="flex items-center justify-between mb-6">
@@ -506,7 +512,7 @@ const SCorpTaxCalculator = () => {
 
       {showBrackets && (
         <EditTaxBrackets
-          filingStatus={inputs.filingStatus}
+          filingStatus={state.filingStatus}
           totalIncome={calculations.totalIncome}
         />
       )}
@@ -530,7 +536,7 @@ const SCorpTaxCalculator = () => {
                 <input
                   id="revenue"
                   type="number"
-                  value={inputs.revenue}
+                  value={state.revenue}
                   onChange={(e) => updateInput("revenue", e.target.value)}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
@@ -545,7 +551,7 @@ const SCorpTaxCalculator = () => {
                 <input
                   id="salary"
                   type="number"
-                  value={inputs.salary}
+                  value={state.salary}
                   onChange={(e) => updateInput("salary", e.target.value)}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
@@ -560,7 +566,7 @@ const SCorpTaxCalculator = () => {
                 <input
                   id="businessExpenses"
                   type="number"
-                  value={inputs.businessExpenses}
+                  value={state.businessExpenses}
                   onChange={(e) =>
                     updateInput("businessExpenses", e.target.value)
                   }
@@ -577,7 +583,7 @@ const SCorpTaxCalculator = () => {
                 <input
                   id="healthInsurance"
                   type="number"
-                  value={inputs.healthInsurance}
+                  value={state.healthInsurance}
                   onChange={(e) =>
                     updateInput("healthInsurance", e.target.value)
                   }
@@ -594,7 +600,7 @@ const SCorpTaxCalculator = () => {
                 <input
                   id="retirementContribution"
                   type="number"
-                  value={inputs.retirementContribution}
+                  value={state.retirementContribution}
                   onChange={(e) =>
                     updateInput("retirementContribution", e.target.value)
                   }
@@ -611,7 +617,7 @@ const SCorpTaxCalculator = () => {
                 <input
                   id="homeOfficeDeduction"
                   type="number"
-                  value={inputs.homeOfficeDeduction}
+                  value={state.homeOfficeDeduction}
                   onChange={(e) =>
                     updateInput("homeOfficeDeduction", e.target.value)
                   }
@@ -628,7 +634,7 @@ const SCorpTaxCalculator = () => {
                 <input
                   id="priorYearTax"
                   type="number"
-                  value={inputs.priorYearTax}
+                  value={state.priorYearTax}
                   onChange={(e) => updateInput("priorYearTax", e.target.value)}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
@@ -637,12 +643,12 @@ const SCorpTaxCalculator = () => {
                 <SelectField
                   id="filingStatus"
                   label="Filing Status"
-                  value={inputs.filingStatus}
+                  value={state.filingStatus}
                   onChange={(e) =>
-                    setInputs((prev) => ({
-                      ...prev,
+                    setState({
+                      ...state,
                       filingStatus: e.target.value as FilingStatus,
-                    }))
+                    })
                   }
                   options={[
                     { value: "single", label: "Single" },
@@ -666,15 +672,17 @@ const SCorpTaxCalculator = () => {
                     <input
                       type="radio"
                       name="deductionType"
-                      checked={deductionType === "standard"}
-                      onChange={() => setDeductionType("standard")}
+                      checked={state.deductionType === "standard"}
+                      onChange={() =>
+                        setState({ ...state, deductionType: "standard" })
+                      }
                       className="mr-2"
                     />
                     <span className="text-sm">
                       Standard Deduction (Federal:{" "}
                       {formatCurrency(
                         standardDeductions[
-                          inputs.filingStatus === "marriedJoint"
+                          state.filingStatus === "marriedJoint"
                             ? "marriedJoint"
                             : "single"
                         ].federal
@@ -686,18 +694,22 @@ const SCorpTaxCalculator = () => {
                     <input
                       type="radio"
                       name="deductionType"
-                      checked={deductionType === "itemized"}
-                      onChange={() => setDeductionType("itemized")}
+                      checked={state.deductionType === "itemized"}
+                      onChange={() =>
+                        setState({ ...state, deductionType: "itemized" })
+                      }
                       className="mr-2"
                     />
                     <span className="text-sm">Itemized Deductions</span>
                   </label>
-                  {deductionType === "itemized" && (
+                  {state.deductionType === "itemized" && (
                     <InputField
                       id="itemizedAmount"
                       label="Itemized Deduction Amount"
-                      value={itemizedAmount}
-                      onChange={(e) => setItemizedAmount(e.target.value)}
+                      value={state.itemizedAmount}
+                      onChange={(e) =>
+                        setState({ ...state, itemizedAmount: e.target.value })
+                      }
                       type="number"
                       className="mt-2"
                     />

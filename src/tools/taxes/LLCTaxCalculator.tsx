@@ -10,6 +10,7 @@ import { EditTaxBrackets } from "./EditTaxBrackets";
 import { useTaxBrackets } from "./TaxBracketContext";
 import { InputField, SelectField } from "./TaxFormFields";
 import { type FilingStatus, calculateTax, formatCurrency } from "./taxUtils";
+import { useLocalStorageState } from "./useLocalStorageState";
 
 const standardDeductions: Record<
   FilingStatus,
@@ -20,10 +21,17 @@ const standardDeductions: Record<
 };
 
 const LLCTaxCalculator = () => {
-  const [income, setIncome] = useState("");
-  const [filingStatus, setFilingStatus] = useState<FilingStatus>("single");
-  const [standardDeduction, setStandardDeduction] = useState(true);
-  const [itemizedAmount, setItemizedAmount] = useState("");
+  const [income, setIncome] = useLocalStorageState<string>("llc_income", "");
+  const [filingStatus, setFilingStatus] = useLocalStorageState<FilingStatus>(
+    "llc_filingStatus",
+    "single"
+  );
+  const [standardDeduction, setStandardDeduction] =
+    useLocalStorageState<boolean>("llc_standardDeduction", true);
+  const [itemizedAmount, setItemizedAmount] = useLocalStorageState<string>(
+    "llc_itemizedAmount",
+    ""
+  );
   const [showBrackets, setShowBrackets] = useState(false);
 
   const { federalBrackets, oregonBrackets } = useTaxBrackets();
