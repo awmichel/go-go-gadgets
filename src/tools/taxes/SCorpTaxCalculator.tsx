@@ -10,12 +10,7 @@ import {
 } from "lucide-react";
 import { useMemo, useState } from "react";
 import { useTaxBrackets } from "./TaxBracketContext";
-import {
-  type FilingStatus,
-  type TaxBracket,
-  calculateTax,
-  formatCurrency,
-} from "./taxUtils";
+import { type FilingStatus, calculateTax, formatCurrency } from "./taxUtils";
 
 const SCorpTaxCalculator = () => {
   const [inputs, setInputs] = useState({
@@ -123,7 +118,7 @@ const SCorpTaxCalculator = () => {
       futa +
       suta;
 
-    const totalIncomeTaxes = federalTax + oregonTax;
+    const totalIncomeTaxes = federalTax.total + oregonTax.total;
     const totalTaxes = totalPayrollTaxes + totalIncomeTaxes + catTax;
 
     // Quarterly payment calculation
@@ -156,11 +151,17 @@ const SCorpTaxCalculator = () => {
     };
   }, [inputs, federalBrackets, oregonBrackets, payrollRates]);
 
-  const updateInput = (field, value) => {
+  // Add type annotations for function parameters to resolve implicit any warnings
+  const updateInput = (field: string, value: string) => {
     setInputs((prev) => ({ ...prev, [field]: Number.parseFloat(value) || 0 }));
   };
 
-  const updateBracket = (type, index, field, value) => {
+  const updateBracket = (
+    type: "federal" | "oregon",
+    index: number,
+    field: string,
+    value: string
+  ) => {
     if (type === "federal") {
       setFederalBrackets((prev) => ({
         ...prev,
@@ -193,7 +194,7 @@ const SCorpTaxCalculator = () => {
     }
   };
 
-  const addBracket = (type) => {
+  const addBracket = (type: "federal" | "oregon") => {
     if (type === "federal") {
       setFederalBrackets((prev) => {
         const currentBrackets = [...prev[inputs.filingStatus]];
@@ -248,7 +249,7 @@ const SCorpTaxCalculator = () => {
     }
   };
 
-  const removeBracket = (type, index) => {
+  const removeBracket = (type: "federal" | "oregon", index: number) => {
     if (type === "federal") {
       setFederalBrackets((prev) => {
         const currentBrackets = prev[inputs.filingStatus];
@@ -276,14 +277,17 @@ const SCorpTaxCalculator = () => {
     }
   };
 
-  const updatePayrollRate = (field, value) => {
+  const updatePayrollRate = (field: string, value: string) => {
     setPayrollRates((prev) => ({
       ...prev,
       [field]: Number.parseFloat(value) || 0,
     }));
   };
 
-  const getBracketForIncome = (income, brackets) => {
+  const getBracketForIncome = (
+    income: number,
+    brackets: { min: number; max: number }[]
+  ) => {
     for (let i = 0; i < brackets.length; i++) {
       if (income >= brackets[i].min && income < brackets[i].max) {
         return i;
@@ -292,7 +296,11 @@ const SCorpTaxCalculator = () => {
     return brackets.length - 1;
   };
 
-  const renderTaxBrackets = (brackets, type, income) => {
+  const renderTaxBrackets = (
+    brackets: { min: number; max: number; rate: number }[],
+    type: "federal" | "oregon",
+    income: number
+  ) => {
     const activeBracket = getBracketForIncome(income, brackets);
 
     return (
@@ -307,6 +315,7 @@ const SCorpTaxCalculator = () => {
               Income: {formatCurrency(income)}
             </div>
             <button
+              type="button"
               onClick={() => addBracket(type)}
               className="p-1 text-green-600 hover:bg-green-100 rounded"
               title="Add bracket"
@@ -318,73 +327,76 @@ const SCorpTaxCalculator = () => {
 
         <div className="space-y-1">
           {brackets.map((bracket, index) => (
-            <div
-              key={index}
-              className={`p-3 rounded border ${
-                index === activeBracket
-                  ? "bg-blue-100 border-blue-300"
-                  : "bg-gray-50 border-gray-200"
-              }`}
-            >
-              <div className="flex items-center space-x-2">
-                <div className="flex-1">
-                  <div className="flex items-center space-x-2 mb-2">
-                    <div className="flex items-center space-x-1">
-                      <input
-                        type="number"
-                        value={bracket.min}
-                        onChange={(e) =>
-                          updateBracket(type, index, "min", e.target.value)
-                        }
-                        className="w-20 px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
-                      />
-                      <span className="text-xs text-gray-600">to</span>
-                      {bracket.max === Number.POSITIVE_INFINITY ? (
-                        <span className="w-20 px-2 py-1 text-xs bg-gray-100 border border-gray-300 rounded text-center">
-                          ∞
-                        </span>
-                      ) : (
+            // eslint-disable-next-line react/no-array-index-key
+            <div key={index} className="flex justify-between">
+              <div
+                className={`p-3 rounded border ${
+                  index === activeBracket
+                    ? "bg-blue-100 border-blue-300"
+                    : "bg-gray-50 border-gray-200"
+                }`}
+              >
+                <div className="flex items-center space-x-2">
+                  <div className="flex-1">
+                    <div className="flex items-center space-x-2 mb-2">
+                      <div className="flex items-center space-x-1">
                         <input
                           type="number"
-                          value={bracket.max}
+                          value={bracket.min}
                           onChange={(e) =>
-                            updateBracket(type, index, "max", e.target.value)
+                            updateBracket(type, index, "min", e.target.value)
                           }
                           className="w-20 px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
                         />
+                        <span className="text-xs text-gray-600">to</span>
+                        {bracket.max === Number.POSITIVE_INFINITY ? (
+                          <span className="w-20 px-2 py-1 text-xs bg-gray-100 border border-gray-300 rounded text-center">
+                            ∞
+                          </span>
+                        ) : (
+                          <input
+                            type="number"
+                            value={bracket.max}
+                            onChange={(e) =>
+                              updateBracket(type, index, "max", e.target.value)
+                            }
+                            className="w-20 px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+                          />
+                        )}
+                      </div>
+                      {index === activeBracket && (
+                        <span className="px-2 py-1 bg-blue-500 text-white text-xs rounded">
+                          Current
+                        </span>
                       )}
                     </div>
-                    {index === activeBracket && (
-                      <span className="px-2 py-1 bg-blue-500 text-white text-xs rounded">
-                        Current
-                      </span>
-                    )}
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-1">
-                      <span className="text-xs text-gray-600">Rate:</span>
-                      <input
-                        type="number"
-                        step="0.001"
-                        value={bracket.rate}
-                        onChange={(e) =>
-                          updateBracket(type, index, "rate", e.target.value)
-                        }
-                        className="w-16 px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
-                      />
-                      <span className="text-xs text-gray-600">
-                        ({(bracket.rate * 100).toFixed(1)}%)
-                      </span>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-1">
+                        <span className="text-xs text-gray-600">Rate:</span>
+                        <input
+                          type="number"
+                          step="0.001"
+                          value={bracket.rate}
+                          onChange={(e) =>
+                            updateBracket(type, index, "rate", e.target.value)
+                          }
+                          className="w-16 px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+                        />
+                        <span className="text-xs text-gray-600">
+                          ({(bracket.rate * 100).toFixed(1)}%)
+                        </span>
+                      </div>
+                      {brackets.length > 1 && (
+                        <button
+                          type="button"
+                          onClick={() => removeBracket(type, index)}
+                          className="p-1 text-red-600 hover:bg-red-100 rounded"
+                          title="Remove bracket"
+                        >
+                          <Minus className="w-3 h-3" />
+                        </button>
+                      )}
                     </div>
-                    {brackets.length > 1 && (
-                      <button
-                        onClick={() => removeBracket(type, index)}
-                        className="p-1 text-red-600 hover:bg-red-100 rounded"
-                        title="Remove bracket"
-                      >
-                        <Minus className="w-3 h-3" />
-                      </button>
-                    )}
                   </div>
                 </div>
               </div>
@@ -409,8 +421,14 @@ const SCorpTaxCalculator = () => {
             </h5>
             <div className="space-y-2">
               <div className="flex items-center space-x-2">
-                <label className="text-xs text-gray-600 w-20">Employee:</label>
+                <label
+                  htmlFor="socialSecurityEmployee"
+                  className="text-xs text-gray-600 w-20"
+                >
+                  Employee:
+                </label>
                 <input
+                  id="socialSecurityEmployee"
                   type="number"
                   step="0.001"
                   value={payrollRates.socialSecurityEmployee}
@@ -424,8 +442,14 @@ const SCorpTaxCalculator = () => {
                 </span>
               </div>
               <div className="flex items-center space-x-2">
-                <label className="text-xs text-gray-600 w-20">Employer:</label>
+                <label
+                  htmlFor="socialSecurityEmployer"
+                  className="text-xs text-gray-600 w-20"
+                >
+                  Employer:
+                </label>
                 <input
+                  id="socialSecurityEmployer"
                   type="number"
                   step="0.001"
                   value={payrollRates.socialSecurityEmployer}
@@ -439,8 +463,14 @@ const SCorpTaxCalculator = () => {
                 </span>
               </div>
               <div className="flex items-center space-x-2">
-                <label className="text-xs text-gray-600 w-20">Wage Base:</label>
+                <label
+                  htmlFor="socialSecurityWageBase"
+                  className="text-xs text-gray-600 w-20"
+                >
+                  Wage Base:
+                </label>
                 <input
+                  id="socialSecurityWageBase"
                   type="number"
                   value={payrollRates.socialSecurityWageBase}
                   onChange={(e) =>
@@ -456,8 +486,14 @@ const SCorpTaxCalculator = () => {
             <h5 className="text-sm font-medium text-gray-700">Medicare</h5>
             <div className="space-y-2">
               <div className="flex items-center space-x-2">
-                <label className="text-xs text-gray-600 w-20">Employee:</label>
+                <label
+                  htmlFor="medicareEmployee"
+                  className="text-xs text-gray-600 w-20"
+                >
+                  Employee:
+                </label>
                 <input
+                  id="medicareEmployee"
                   type="number"
                   step="0.001"
                   value={payrollRates.medicareEmployee}
@@ -471,8 +507,14 @@ const SCorpTaxCalculator = () => {
                 </span>
               </div>
               <div className="flex items-center space-x-2">
-                <label className="text-xs text-gray-600 w-20">Employer:</label>
+                <label
+                  htmlFor="medicareEmployer"
+                  className="text-xs text-gray-600 w-20"
+                >
+                  Employer:
+                </label>
                 <input
+                  id="medicareEmployer"
                   type="number"
                   step="0.001"
                   value={payrollRates.medicareEmployer}
@@ -486,10 +528,14 @@ const SCorpTaxCalculator = () => {
                 </span>
               </div>
               <div className="flex items-center space-x-2">
-                <label className="text-xs text-gray-600 w-20">
+                <label
+                  htmlFor="medicareSurtaxRate"
+                  className="text-xs text-gray-600 w-20"
+                >
                   Surtax Rate:
                 </label>
                 <input
+                  id="medicareSurtaxRate"
                   type="number"
                   step="0.001"
                   value={payrollRates.medicareSurtaxRate}
@@ -503,10 +549,14 @@ const SCorpTaxCalculator = () => {
                 </span>
               </div>
               <div className="flex items-center space-x-2">
-                <label className="text-xs text-gray-600 w-20">
+                <label
+                  htmlFor="medicareSurtaxThreshold"
+                  className="text-xs text-gray-600 w-20"
+                >
                   Surtax Limit:
                 </label>
                 <input
+                  id="medicareSurtaxThreshold"
                   type="number"
                   value={payrollRates.medicareSurtaxThreshold}
                   onChange={(e) =>
@@ -522,10 +572,14 @@ const SCorpTaxCalculator = () => {
             <h5 className="text-sm font-medium text-gray-700">Oregon State</h5>
             <div className="space-y-2">
               <div className="flex items-center space-x-2">
-                <label className="text-xs text-gray-600 w-20">
+                <label
+                  htmlFor="oregonPaidLeave"
+                  className="text-xs text-gray-600 w-20"
+                >
                   Paid Leave:
                 </label>
                 <input
+                  id="oregonPaidLeave"
                   type="number"
                   step="0.001"
                   value={payrollRates.oregonPaidLeave}
@@ -539,10 +593,14 @@ const SCorpTaxCalculator = () => {
                 </span>
               </div>
               <div className="flex items-center space-x-2">
-                <label className="text-xs text-gray-600 w-20">
+                <label
+                  htmlFor="oregonTransit"
+                  className="text-xs text-gray-600 w-20"
+                >
                   Transit Tax:
                 </label>
                 <input
+                  id="oregonTransit"
                   type="number"
                   step="0.001"
                   value={payrollRates.oregonTransit}
@@ -556,8 +614,11 @@ const SCorpTaxCalculator = () => {
                 </span>
               </div>
               <div className="flex items-center space-x-2">
-                <label className="text-xs text-gray-600 w-20">SUTA Rate:</label>
+                <label htmlFor="suta" className="text-xs text-gray-600 w-20">
+                  SUTA Rate:
+                </label>
                 <input
+                  id="suta"
                   type="number"
                   step="0.001"
                   value={payrollRates.suta}
@@ -575,8 +636,11 @@ const SCorpTaxCalculator = () => {
             <h5 className="text-sm font-medium text-gray-700">Unemployment</h5>
             <div className="space-y-2">
               <div className="flex items-center space-x-2">
-                <label className="text-xs text-gray-600 w-20">FUTA Rate:</label>
+                <label htmlFor="futa" className="text-xs text-gray-600 w-20">
+                  FUTA Rate:
+                </label>
                 <input
+                  id="futa"
                   type="number"
                   step="0.001"
                   value={payrollRates.futa}
@@ -588,8 +652,14 @@ const SCorpTaxCalculator = () => {
                 </span>
               </div>
               <div className="flex items-center space-x-2">
-                <label className="text-xs text-gray-600 w-20">FUTA Base:</label>
+                <label
+                  htmlFor="futaWageBase"
+                  className="text-xs text-gray-600 w-20"
+                >
+                  FUTA Base:
+                </label>
                 <input
+                  id="futaWageBase"
                   type="number"
                   value={payrollRates.futaWageBase}
                   onChange={(e) =>
@@ -616,6 +686,7 @@ const SCorpTaxCalculator = () => {
         </div>
         <div className="flex gap-2">
           <button
+            type="button"
             onClick={() => setShowBrackets(!showBrackets)}
             className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
           >
@@ -623,6 +694,7 @@ const SCorpTaxCalculator = () => {
             {showBrackets ? "Hide" : "Show"} Tax Brackets
           </button>
           <button
+            type="button"
             onClick={() => setShowPayrollRates(!showPayrollRates)}
             className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
           >
@@ -686,10 +758,14 @@ const SCorpTaxCalculator = () => {
             </h2>
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label
+                  htmlFor="revenue"
+                  className="block text-sm font-medium text-gray-700 mb-1"
+                >
                   Annual Revenue
                 </label>
                 <input
+                  id="revenue"
                   type="number"
                   value={inputs.revenue}
                   onChange={(e) => updateInput("revenue", e.target.value)}
@@ -697,10 +773,14 @@ const SCorpTaxCalculator = () => {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label
+                  htmlFor="salary"
+                  className="block text-sm font-medium text-gray-700 mb-1"
+                >
                   W-2 Salary
                 </label>
                 <input
+                  id="salary"
                   type="number"
                   value={inputs.salary}
                   onChange={(e) => updateInput("salary", e.target.value)}
@@ -708,10 +788,14 @@ const SCorpTaxCalculator = () => {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label
+                  htmlFor="businessExpenses"
+                  className="block text-sm font-medium text-gray-700 mb-1"
+                >
                   Business Expenses
                 </label>
                 <input
+                  id="businessExpenses"
                   type="number"
                   value={inputs.businessExpenses}
                   onChange={(e) =>
@@ -721,10 +805,14 @@ const SCorpTaxCalculator = () => {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label
+                  htmlFor="healthInsurance"
+                  className="block text-sm font-medium text-gray-700 mb-1"
+                >
                   Health Insurance (Annual)
                 </label>
                 <input
+                  id="healthInsurance"
                   type="number"
                   value={inputs.healthInsurance}
                   onChange={(e) =>
@@ -734,10 +822,14 @@ const SCorpTaxCalculator = () => {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label
+                  htmlFor="retirementContribution"
+                  className="block text-sm font-medium text-gray-700 mb-1"
+                >
                   Retirement Contribution
                 </label>
                 <input
+                  id="retirementContribution"
                   type="number"
                   value={inputs.retirementContribution}
                   onChange={(e) =>
@@ -747,10 +839,14 @@ const SCorpTaxCalculator = () => {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label
+                  htmlFor="homeOfficeDeduction"
+                  className="block text-sm font-medium text-gray-700 mb-1"
+                >
                   Home Office Deduction
                 </label>
                 <input
+                  id="homeOfficeDeduction"
                   type="number"
                   value={inputs.homeOfficeDeduction}
                   onChange={(e) =>
@@ -760,10 +856,14 @@ const SCorpTaxCalculator = () => {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label
+                  htmlFor="taxDeductions"
+                  className="block text-sm font-medium text-gray-700 mb-1"
+                >
                   Standard or Itemized Deductions
                 </label>
                 <input
+                  id="taxDeductions"
                   type="number"
                   value={inputs.taxDeductions}
                   onChange={(e) => updateInput("taxDeductions", e.target.value)}
@@ -771,10 +871,14 @@ const SCorpTaxCalculator = () => {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label
+                  htmlFor="priorYearTax"
+                  className="block text-sm font-medium text-gray-700 mb-1"
+                >
                   Prior Year Total Tax (for safe harbor)
                 </label>
                 <input
+                  id="priorYearTax"
                   type="number"
                   value={inputs.priorYearTax}
                   onChange={(e) => updateInput("priorYearTax", e.target.value)}
@@ -782,10 +886,14 @@ const SCorpTaxCalculator = () => {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label
+                  htmlFor="filingStatus"
+                  className="block text-sm font-medium text-gray-700 mb-1"
+                >
                   Filing Status
                 </label>
                 <select
+                  id="filingStatus"
                   value={inputs.filingStatus}
                   onChange={(e) =>
                     setInputs((prev) => ({

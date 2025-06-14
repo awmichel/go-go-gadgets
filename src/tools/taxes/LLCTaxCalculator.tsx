@@ -1,12 +1,7 @@
 import { Calculator, DollarSign, FileText, TrendingUp } from "lucide-react";
-import React, { useState, useMemo } from "react";
+import { useMemo, useState } from "react";
 import { useTaxBrackets } from "./TaxBracketContext";
-import {
-  type FilingStatus,
-  type TaxBracket,
-  calculateTax,
-  formatCurrency,
-} from "./taxUtils";
+import { type FilingStatus, calculateTax, formatCurrency } from "./taxUtils";
 
 const standardDeductions: Record<
   FilingStatus,
@@ -34,13 +29,6 @@ const LLCTaxCalculator = () => {
           federal: Number.parseFloat(itemizedAmount) || 0,
           oregon: Number.parseFloat(itemizedAmount) || 0,
         };
-
-    // Federal calculations
-    const federalTaxableIncome = Math.max(0, grossIncome - deductions.federal);
-    const federalIncomeTax = calculateTax(
-      federalTaxableIncome,
-      federalBrackets[filingStatus]
-    );
 
     // Self-employment tax (15.3% on 92.35% of SE income)
     const seTaxableIncome = grossIncome * 0.9235;
