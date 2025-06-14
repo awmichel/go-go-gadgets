@@ -1,6 +1,13 @@
-import { Calculator, DollarSign, FileText, TrendingUp } from "lucide-react";
+import {
+  BarChart3,
+  Calculator,
+  DollarSign,
+  FileText,
+  TrendingUp,
+} from "lucide-react";
 import { useMemo, useState } from "react";
 import { useTaxBrackets } from "./TaxBracketContext";
+import { InputField, SelectField } from "./TaxFormFields";
 import { type FilingStatus, calculateTax, formatCurrency } from "./taxUtils";
 
 const standardDeductions: Record<
@@ -16,6 +23,7 @@ const LLCTaxCalculator = () => {
   const [filingStatus, setFilingStatus] = useState<FilingStatus>("single");
   const [standardDeduction, setStandardDeduction] = useState(true);
   const [itemizedAmount, setItemizedAmount] = useState("");
+  const [showBrackets, setShowBrackets] = useState(false);
 
   const { federalBrackets, oregonBrackets } = useTaxBrackets();
 
@@ -87,12 +95,23 @@ const LLCTaxCalculator = () => {
   return (
     <div className="bg-white rounded-lg shadow-lg p-6 mb-6">
       <div className="mb-8">
-        <div className="flex items-center gap-3 mb-4">
-          <Calculator className="w-8 h-8 text-blue-600" />
-          <h1 className="text-3xl font-bold text-gray-900">
-            LLC Passthrough Tax Calculator
-          </h1>
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center gap-3 mb-4">
+            <Calculator className="w-8 h-8 text-blue-600" />
+            <h1 className="text-3xl font-bold text-gray-900">
+              LLC Passthrough Tax Calculator
+            </h1>
+          </div>
+          <button
+            type="button"
+            onClick={() => setShowBrackets((prev) => !prev)}
+            className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+          >
+            <BarChart3 className="w-4 h-4" />
+            {showBrackets ? "Hide" : "Show"} Tax Brackets
+          </button>
         </div>
+
         <p className="text-gray-600">
           Calculate your federal and Oregon tax liability on LLC passthrough
           income (2024 tax year)
@@ -109,22 +128,14 @@ const LLCTaxCalculator = () => {
             </h2>
 
             <div className="space-y-4">
-              <div>
-                <label
-                  htmlFor="income"
-                  className="block text-sm font-medium text-gray-700 mb-1"
-                >
-                  Taxable LLC Income
-                </label>
-                <input
-                  id="income"
-                  type="number"
-                  value={income}
-                  onChange={(e) => setIncome(e.target.value)}
-                  placeholder="Enter your taxable income"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
+              <InputField
+                id="income"
+                label="Taxable LLC Income"
+                value={income}
+                onChange={(e) => setIncome(e.target.value)}
+                placeholder="Enter your taxable income"
+                type="number"
+              />
 
               <div>
                 <label
@@ -133,17 +144,18 @@ const LLCTaxCalculator = () => {
                 >
                   Filing Status
                 </label>
-                <select
+                <SelectField
                   id="filingStatus"
+                  label="Filing Status"
                   value={filingStatus}
                   onChange={(e) =>
                     setFilingStatus(e.target.value as FilingStatus)
                   }
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                >
-                  <option value="single">Single</option>
-                  <option value="marriedJoint">Married Filing Jointly</option>
-                </select>
+                  options={[
+                    { value: "single", label: "Single" },
+                    { value: "marriedJoint", label: "Married Filing Jointly" },
+                  ]}
+                />
               </div>
 
               <div>
@@ -300,6 +312,66 @@ const LLCTaxCalculator = () => {
           )}
         </div>
       </div>
+
+      {showBrackets && (
+        <div className="bg-gray-50 p-4 rounded-lg mb-6">
+          <h2 className="text-lg font-semibold text-gray-900 mb-2 flex items-center gap-2">
+            <BarChart3 className="w-5 h-5 text-gray-600" />
+            Tax Brackets
+          </h2>
+          <div className="grid md:grid-cols-2 gap-6">
+            <div>
+              <h4 className="font-medium text-gray-700 mb-2">
+                Federal Tax Brackets{" "}
+                {filingStatus === "marriedJoint"
+                  ? "(Married Filing Jointly)"
+                  : "(Single)"}
+              </h4>
+              <div className="space-y-1">
+                {federalBrackets[filingStatus].map((bracket, index) => (
+                  // eslint-disable-next-line react/no-array-index-key
+                  <div key={index} className="flex justify-between text-sm">
+                    <span>
+                      ${typeof bracket.min === "number"
+                        ? bracket.min.toLocaleString()
+                        : 0} -{" "}
+                      {typeof bracket.max === "number"
+                        ? bracket.max === Number.POSITIVE_INFINITY
+                          ? "∞"
+                          : `$${bracket.max.toLocaleString()}`
+                        : "-"}{" "}
+                      @ {(bracket.rate * 100).toFixed(2)}%
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+            <div>
+              <h4 className="font-medium text-gray-700 mb-2">
+                Oregon Tax Brackets
+              </h4>
+              <div className="space-y-1">
+                {oregonBrackets.map((bracket, index) => (
+                  // eslint-disable-next-line react/no-array-index-key
+                  <div key={index} className="flex justify-between text-sm">
+                    <span>
+                      ${typeof bracket.min === "number"
+                        ? bracket.min.toLocaleString()
+                        : 0} -{" "}
+                      {typeof bracket.max === "number"
+                        ? bracket.max === Number.POSITIVE_INFINITY
+                          ? "∞"
+                          : `$${bracket.max.toLocaleString()}`
+                        : "-"}{" "}
+                      @ {(bracket.rate * 100).toFixed(2)}%
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       <div className="mt-8 p-4 bg-yellow-50 rounded-lg">
         <h3 className="font-semibold text-yellow-800 mb-2">Important Notes:</h3>

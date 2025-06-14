@@ -10,7 +10,17 @@ import {
 } from "lucide-react";
 import { useMemo, useState } from "react";
 import { useTaxBrackets } from "./TaxBracketContext";
+import { InputField, SelectField } from "./TaxFormFields";
 import { type FilingStatus, calculateTax, formatCurrency } from "./taxUtils";
+
+// Add standardDeductions definition for SCorpTaxCalculator
+const standardDeductions: Record<
+  "single" | "marriedJoint",
+  { federal: number }
+> = {
+  single: { federal: 14600 },
+  marriedJoint: { federal: 29200 },
+};
 
 const SCorpTaxCalculator = () => {
   const [inputs, setInputs] = useState({
@@ -23,7 +33,6 @@ const SCorpTaxCalculator = () => {
     priorYearTax: 0,
     filingStatus: "single" as FilingStatus, // single, marriedJoint, marriedSeparate
     commercialActivity: 150000, // for CAT tax
-    taxDeductions: 15000, // for federal and state deductions
   });
 
   const [showBrackets, setShowBrackets] = useState(false);
@@ -52,6 +61,12 @@ const SCorpTaxCalculator = () => {
     oregonBrackets,
     setOregonBrackets,
   } = useTaxBrackets();
+
+  // Add deduction type logic and UI (standard/itemized) similar to LLC
+  const [deductionType, setDeductionType] = useState<"standard" | "itemized">(
+    "standard"
+  );
+  const [itemizedAmount, setItemizedAmount] = useState("");
 
   const calculations = useMemo(() => {
     // Business profit calculation
@@ -93,7 +108,14 @@ const SCorpTaxCalculator = () => {
     const oregonTransit = inputs.salary * payrollRates.oregonTransit;
 
     // Total income for tax purposes
-    const totalIncome = inputs.salary + businessProfit - inputs.taxDeductions;
+    const deductionValue =
+      deductionType === "standard"
+        ? standardDeductions[
+            inputs.filingStatus === "marriedJoint" ? "marriedJoint" : "single"
+          ].federal
+        : Number.parseFloat(itemizedAmount) || 0;
+
+    const totalIncome = inputs.salary + businessProfit - deductionValue;
 
     // Federal income tax
     const federalTax = calculateTax(
@@ -149,7 +171,14 @@ const SCorpTaxCalculator = () => {
       requiredQuarterly,
       totalBusinessExpenses,
     };
-  }, [inputs, federalBrackets, oregonBrackets, payrollRates]);
+  }, [
+    inputs,
+    federalBrackets,
+    oregonBrackets,
+    payrollRates,
+    deductionType,
+    itemizedAmount,
+  ]);
 
   // Add type annotations for function parameters to resolve implicit any warnings
   const updateInput = (field: string, value: string) => {
@@ -857,21 +886,6 @@ const SCorpTaxCalculator = () => {
               </div>
               <div>
                 <label
-                  htmlFor="taxDeductions"
-                  className="block text-sm font-medium text-gray-700 mb-1"
-                >
-                  Standard or Itemized Deductions
-                </label>
-                <input
-                  id="taxDeductions"
-                  type="number"
-                  value={inputs.taxDeductions}
-                  onChange={(e) => updateInput("taxDeductions", e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-              <div>
-                <label
                   htmlFor="priorYearTax"
                   className="block text-sm font-medium text-gray-700 mb-1"
                 >
@@ -886,14 +900,9 @@ const SCorpTaxCalculator = () => {
                 />
               </div>
               <div>
-                <label
-                  htmlFor="filingStatus"
-                  className="block text-sm font-medium text-gray-700 mb-1"
-                >
-                  Filing Status
-                </label>
-                <select
+                <SelectField
                   id="filingStatus"
+                  label="Filing Status"
                   value={inputs.filingStatus}
                   onChange={(e) =>
                     setInputs((prev) => ({
@@ -901,14 +910,65 @@ const SCorpTaxCalculator = () => {
                       filingStatus: e.target.value as FilingStatus,
                     }))
                   }
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  options={[
+                    { value: "single", label: "Single" },
+                    { value: "marriedJoint", label: "Married Filing Jointly" },
+                    {
+                      value: "marriedSeparate",
+                      label: "Married Filing Separately",
+                    },
+                  ]}
+                />
+              </div>
+              <div className="mb-4">
+                <label
+                  className="block text-sm font-medium text-gray-700 mb-2"
+                  htmlFor="deductionType"
                 >
-                  <option value="single">Single</option>
-                  <option value="marriedJoint">Married Filing Jointly</option>
-                  <option value="marriedSeparate">
-                    Married Filing Separately
-                  </option>
-                </select>
+                  Deduction Type
+                </label>
+                <div id="deductionType" className="space-y-2">
+                  <label className="flex items-center">
+                    <input
+                      type="radio"
+                      name="deductionType"
+                      checked={deductionType === "standard"}
+                      onChange={() => setDeductionType("standard")}
+                      className="mr-2"
+                    />
+                    <span className="text-sm">
+                      Standard Deduction (Federal:{" "}
+                      {formatCurrency(
+                        standardDeductions[
+                          inputs.filingStatus === "marriedJoint"
+                            ? "marriedJoint"
+                            : "single"
+                        ].federal
+                      )}
+                      )
+                    </span>
+                  </label>
+                  <label className="flex items-center">
+                    <input
+                      type="radio"
+                      name="deductionType"
+                      checked={deductionType === "itemized"}
+                      onChange={() => setDeductionType("itemized")}
+                      className="mr-2"
+                    />
+                    <span className="text-sm">Itemized Deductions</span>
+                  </label>
+                  {deductionType === "itemized" && (
+                    <InputField
+                      id="itemizedAmount"
+                      label="Itemized Deduction Amount"
+                      value={itemizedAmount}
+                      onChange={(e) => setItemizedAmount(e.target.value)}
+                      type="number"
+                      className="mt-2"
+                    />
+                  )}
+                </div>
               </div>
             </div>
           </div>
