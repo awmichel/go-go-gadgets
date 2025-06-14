@@ -1,15 +1,15 @@
-import { useState } from "react";
+import { useState } from 'react';
 
 export function useLocalStorageState<T extends Record<string, unknown>>(
   key: string,
-  defaults: T
+  defaults: T,
 ): [T, (v: Partial<T>) => void] {
   const [state, setState] = useState<T>(() => {
     const saved = localStorage.getItem(key);
     if (saved) {
       try {
         const parsed = JSON.parse(saved);
-        if (typeof parsed === "object" && parsed !== null) {
+        if (typeof parsed === 'object' && parsed !== null) {
           return { ...defaults, ...parsed };
         }
       } catch {}

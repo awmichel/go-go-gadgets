@@ -1,12 +1,12 @@
-import { defineConfig } from "@rsbuild/core";
-import { pluginReact } from "@rsbuild/plugin-react";
+import { defineConfig } from '@rsbuild/core';
+import { pluginReact } from '@rsbuild/plugin-react';
 
 export default defineConfig({
   html: {
-    title: "Go Go Gadgets",
+    title: 'Go Go Gadgets',
   },
   output: {
-    assetPrefix: "/go-go-gadgets/",
+    assetPrefix: '/go-go-gadgets/',
   },
   plugins: [pluginReact()],
   server: {

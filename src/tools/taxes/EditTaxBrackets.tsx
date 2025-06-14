@@ -1,6 +1,6 @@
-import { BarChart3, Minus, Plus } from "lucide-react";
-import { useTaxBrackets } from "./TaxBracketContext";
-import { type FilingStatus, formatCurrency } from "./taxUtils";
+import { BarChart3, Minus, Plus } from 'lucide-react';
+import { useTaxBrackets } from './TaxBracketContext';
+import { type FilingStatus, formatCurrency } from './taxUtils';
 
 export function EditTaxBrackets({
   filingStatus,
@@ -18,12 +18,12 @@ export function EditTaxBrackets({
   } = useTaxBrackets();
 
   const updateBracket = (
-    type: "federal" | "oregon",
+    type: 'federal' | 'oregon',
     index: number,
     field: string,
-    value: string
+    value: string,
   ) => {
-    if (type === "federal") {
+    if (type === 'federal') {
       setFederalBrackets((prev) => ({
         ...prev,
         [filingStatus]: prev[filingStatus].map((bracket, i) =>
@@ -31,11 +31,11 @@ export function EditTaxBrackets({
             ? {
                 ...bracket,
                 [field]:
-                  field === "rate"
+                  field === 'rate'
                     ? Number.parseFloat(value) || 0
                     : Number.parseInt(value) || 0,
               }
-            : bracket
+            : bracket,
         ),
       }));
     } else {
@@ -45,18 +45,18 @@ export function EditTaxBrackets({
             ? {
                 ...bracket,
                 [field]:
-                  field === "rate"
+                  field === 'rate'
                     ? Number.parseFloat(value) || 0
                     : Number.parseInt(value) || 0,
               }
-            : bracket
-        )
+            : bracket,
+        ),
       );
     }
   };
 
-  const addBracket = (type: "federal" | "oregon") => {
-    if (type === "federal") {
+  const addBracket = (type: 'federal' | 'oregon') => {
+    if (type === 'federal') {
       setFederalBrackets((prev) => {
         const currentBrackets = [...prev[filingStatus]];
         const lastBracket = currentBrackets[currentBrackets.length - 1];
@@ -110,8 +110,8 @@ export function EditTaxBrackets({
     }
   };
 
-  const removeBracket = (type: "federal" | "oregon", index: number) => {
-    if (type === "federal") {
+  const removeBracket = (type: 'federal' | 'oregon', index: number) => {
+    if (type === 'federal') {
       setFederalBrackets((prev) => {
         const currentBrackets = prev[filingStatus];
         if (currentBrackets.length <= 1) return prev;
@@ -140,7 +140,7 @@ export function EditTaxBrackets({
 
   const getBracketForIncome = (
     income: number,
-    brackets: { min: number; max: number }[]
+    brackets: { min: number; max: number }[],
   ) => {
     for (let i = 0; i < brackets.length; i++) {
       if (income >= brackets[i].min && income < brackets[i].max) {
@@ -152,8 +152,8 @@ export function EditTaxBrackets({
 
   const renderTaxBrackets = (
     brackets: { min: number; max: number; rate: number }[],
-    type: "federal" | "oregon",
-    income: number
+    type: 'federal' | 'oregon',
+    income: number,
   ) => {
     const activeBracket = getBracketForIncome(income, brackets);
 
@@ -161,8 +161,8 @@ export function EditTaxBrackets({
       <div className="space-y-2">
         <div className="flex justify-between items-center">
           <h4 className="font-medium text-gray-900">
-            {type === "federal" ? "Federal" : "Oregon"} Tax Brackets
-            {type === "federal" && ` (${filingStatus})`}
+            {type === 'federal' ? 'Federal' : 'Oregon'} Tax Brackets
+            {type === 'federal' && ` (${filingStatus})`}
           </h4>
           <div className="flex items-center gap-2">
             <div className="text-sm text-gray-600">
@@ -181,13 +181,13 @@ export function EditTaxBrackets({
 
         <div className="space-y-1">
           {brackets.map((bracket, index) => (
-            // eslint-disable-next-line react/no-array-index-key
+            // biome-ignore lint/suspicious/noArrayIndexKey: this is the best we got
             <div key={index} className="flex justify-between">
               <div
                 className={`p-3 rounded border ${
                   index === activeBracket
-                    ? "bg-blue-100 border-blue-300"
-                    : "bg-gray-50 border-gray-200"
+                    ? 'bg-blue-100 border-blue-300'
+                    : 'bg-gray-50 border-gray-200'
                 }`}
               >
                 <div className="flex items-center space-x-2">
@@ -195,7 +195,7 @@ export function EditTaxBrackets({
                     type="number"
                     value={bracket.min}
                     onChange={(e) =>
-                      updateBracket(type, index, "min", e.target.value)
+                      updateBracket(type, index, 'min', e.target.value)
                     }
                     className="w-20 px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
                   />
@@ -209,7 +209,7 @@ export function EditTaxBrackets({
                       type="number"
                       value={bracket.max}
                       onChange={(e) =>
-                        updateBracket(type, index, "max", e.target.value)
+                        updateBracket(type, index, 'max', e.target.value)
                       }
                       className="w-20 px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
                     />
@@ -220,7 +220,7 @@ export function EditTaxBrackets({
                     step="0.001"
                     value={bracket.rate}
                     onChange={(e) =>
-                      updateBracket(type, index, "rate", e.target.value)
+                      updateBracket(type, index, 'rate', e.target.value)
                     }
                     className="w-16 px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
                   />
@@ -261,11 +261,11 @@ export function EditTaxBrackets({
         <div>
           {renderTaxBrackets(
             federalBrackets[filingStatus] || federalBrackets.single,
-            "federal",
-            totalIncome
+            'federal',
+            totalIncome,
           )}
         </div>
-        <div>{renderTaxBrackets(oregonBrackets, "oregon", totalIncome)}</div>
+        <div>{renderTaxBrackets(oregonBrackets, 'oregon', totalIncome)}</div>
       </div>
     </div>
   );

@@ -1,5 +1,5 @@
-import { createContext, useContext, useEffect, useState } from "react";
-import type { FilingStatus, TaxBracket } from "./taxUtils";
+import { createContext, useContext, useEffect, useState } from 'react';
+import type { FilingStatus, TaxBracket } from './taxUtils';
 
 // Default brackets (from SCorpTaxCalculator, 2025)
 const defaultFederalBrackets: Record<FilingStatus, TaxBracket[]> = {
@@ -39,7 +39,7 @@ export type TaxBracketContextType = {
 };
 
 const TaxBracketContext = createContext<TaxBracketContextType | undefined>(
-  undefined
+  undefined,
 );
 
 export const TaxBracketProvider: React.FC<{ children: React.ReactNode }> = ({
@@ -48,20 +48,20 @@ export const TaxBracketProvider: React.FC<{ children: React.ReactNode }> = ({
   const [federalBrackets, setFederalBrackets] = useState<
     Record<FilingStatus, TaxBracket[]>
   >(() => {
-    const stored = localStorage.getItem("federalBrackets");
+    const stored = localStorage.getItem('federalBrackets');
     return stored ? JSON.parse(stored) : defaultFederalBrackets;
   });
   const [oregonBrackets, setOregonBrackets] = useState<TaxBracket[]>(() => {
-    const stored = localStorage.getItem("oregonBrackets");
+    const stored = localStorage.getItem('oregonBrackets');
     return stored ? JSON.parse(stored) : defaultOregonBrackets;
   });
 
   useEffect(() => {
-    localStorage.setItem("federalBrackets", JSON.stringify(federalBrackets));
+    localStorage.setItem('federalBrackets', JSON.stringify(federalBrackets));
   }, [federalBrackets]);
 
   useEffect(() => {
-    localStorage.setItem("oregonBrackets", JSON.stringify(oregonBrackets));
+    localStorage.setItem('oregonBrackets', JSON.stringify(oregonBrackets));
   }, [oregonBrackets]);
 
   return (
@@ -81,6 +81,6 @@ export const TaxBracketProvider: React.FC<{ children: React.ReactNode }> = ({
 export function useTaxBrackets() {
   const ctx = useContext(TaxBracketContext);
   if (!ctx)
-    throw new Error("useTaxBrackets must be used within a TaxBracketProvider");
+    throw new Error('useTaxBrackets must be used within a TaxBracketProvider');
   return ctx;
 }

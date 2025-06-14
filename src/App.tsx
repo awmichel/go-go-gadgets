@@ -1,36 +1,36 @@
-import { AlertTriangle, Menu, Search, Wrench, X } from "lucide-react";
-import { useEffect, useState } from "react";
-import { type Categories, type Tool, categories, tools } from "./tools";
+import { AlertTriangle, Menu, Search, Wrench, X } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { type Categories, type Tool, categories, tools } from './tools';
 
 const App = () => {
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
-  const [selectedCategory, setSelectedCategory] = useState<Categories | "all">(
-    "all"
+  const [selectedCategory, setSelectedCategory] = useState<Categories | 'all'>(
+    'all',
   );
   const [activeTool, setActiveTool] = useState<Tool | null>(null);
   const [isScrolled, setIsScrolled] = useState(false);
-  const [searchTerm, setSearchTerm] = useState("");
+  const [searchTerm, setSearchTerm] = useState('');
   const [showDisclaimer, setShowDisclaimer] = useState(() => {
-    return sessionStorage.getItem("disclaimerDismissed") !== "true";
+    return sessionStorage.getItem('disclaimerDismissed') !== 'true';
   });
 
   useEffect(() => {
     const handleScroll = () => {
       setIsScrolled(window.scrollY > 20);
     };
-    window.addEventListener("scroll", handleScroll);
-    return () => window.removeEventListener("scroll", handleScroll);
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
   useEffect(() => {
     if (!showDisclaimer) {
-      sessionStorage.setItem("disclaimerDismissed", "true");
+      sessionStorage.setItem('disclaimerDismissed', 'true');
     }
   }, [showDisclaimer]);
 
   const filteredTools = tools.filter((tool) => {
     const matchesCategory =
-      selectedCategory === "all" || tool.category === selectedCategory;
+      selectedCategory === 'all' || tool.category === selectedCategory;
     const matchesSearch =
       tool.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       tool.description.toLowerCase().includes(searchTerm.toLowerCase());
@@ -53,7 +53,7 @@ const App = () => {
           className="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden"
           onClick={() => setIsDrawerOpen(false)}
           onKeyUp={(e) => {
-            if (e.key === "Escape") {
+            if (e.key === 'Escape') {
               setIsDrawerOpen(false);
             }
           }}
@@ -63,7 +63,7 @@ const App = () => {
       {/* Navigation Drawer */}
       <div
         className={`fixed top-0 left-0 h-full w-80 bg-slate-800/95 backdrop-blur-md border-r border-slate-700 z-50 transform transition-transform duration-300 ease-in-out ${
-          isDrawerOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
+          isDrawerOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
         }`}
       >
         <div className="p-6">
@@ -109,8 +109,8 @@ const App = () => {
                   onClick={() => setSelectedCategory(category.id)}
                   className={`w-full flex items-center justify-between p-3 rounded-xl transition-all duration-200 group ${
                     selectedCategory === category.id
-                      ? "bg-gradient-to-r from-blue-600 to-purple-600 shadow-lg"
-                      : "hover:bg-slate-700/50"
+                      ? 'bg-gradient-to-r from-blue-600 to-purple-600 shadow-lg'
+                      : 'hover:bg-slate-700/50'
                   }`}
                 >
                   <div className="flex items-center space-x-3">
@@ -139,8 +139,8 @@ const App = () => {
                   onClick={() => setActiveTool(tool)}
                   className={`w-full flex items-center space-x-3 p-3 rounded-xl transition-all duration-200 group ${
                     activeTool?.id === tool.id
-                      ? "bg-gradient-to-r from-yellow-500 to-orange-500 text-black"
-                      : "hover:bg-slate-700/50 text-white"
+                      ? 'bg-gradient-to-r from-yellow-500 to-orange-500 text-black'
+                      : 'hover:bg-slate-700/50 text-white'
                   }`}
                 >
                   <div
@@ -153,8 +153,8 @@ const App = () => {
                     <div
                       className={`text-xs ${
                         activeTool?.id === tool.id
-                          ? "text-black/70"
-                          : "text-slate-400"
+                          ? 'text-black/70'
+                          : 'text-slate-400'
                       }`}
                     >
                       {tool.description}
@@ -173,8 +173,8 @@ const App = () => {
         <header
           className={`sticky top-0 z-30 transition-all duration-300 ${
             isScrolled
-              ? "bg-slate-900/80 backdrop-blur-md border-b border-slate-700"
-              : ""
+              ? 'bg-slate-900/80 backdrop-blur-md border-b border-slate-700'
+              : ''
           }`}
         >
           <div className="flex items-center justify-between p-6">
@@ -188,12 +188,12 @@ const App = () => {
               </button>
               <div>
                 <h1 className="text-2xl font-bold">
-                  {activeTool ? activeTool.name : "Go Go Gadgets Dashboard"}
+                  {activeTool ? activeTool.name : 'Go Go Gadgets Dashboard'}
                 </h1>
                 <p className="text-slate-400 text-sm">
                   {activeTool
                     ? activeTool.description
-                    : "Select a tool from the sidebar to get started"}
+                    : 'Select a tool from the sidebar to get started'}
                 </p>
               </div>
             </div>

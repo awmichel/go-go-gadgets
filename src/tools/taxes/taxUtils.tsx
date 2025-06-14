@@ -1,10 +1,8 @@
 // Shared tax calculation utilities and components for tax calculators
-import React from "react";
-
 export function formatCurrency(amount: number) {
-  return new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency: "USD",
+  return new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency: 'USD',
     minimumFractionDigits: 0,
     maximumFractionDigits: 0,
   }).format(amount);
@@ -18,7 +16,7 @@ export type TaxBracket = {
 
 export function calculateTax(
   taxableIncome: number,
-  brackets: TaxBracket[]
+  brackets: TaxBracket[],
 ): {
   total: number;
   breakdown: Array<{
@@ -39,10 +37,10 @@ export function calculateTax(
       breakdown.push({
         range: `$${bracket.min.toLocaleString()} - ${
           bracket.max === Number.POSITIVE_INFINITY
-            ? "∞"
-            : "$" + bracket.max.toLocaleString()
+            ? '∞'
+            : `$ ${bracket.max.toLocaleString()}`
         }`,
-        rate: (bracket.rate * 100).toFixed(2) + "%",
+        rate: `${(bracket.rate * 100).toFixed(2)}%`,
         taxableAmount: taxableInBracket,
         tax: taxForBracket,
       });
@@ -52,6 +50,6 @@ export function calculateTax(
 }
 
 // Add FilingStatus type for stricter typing
-export type FilingStatus = "single" | "marriedJoint";
+export type FilingStatus = 'single' | 'marriedJoint';
 
 // Optionally, shared input or breakdown components can be added here for further deduplication.

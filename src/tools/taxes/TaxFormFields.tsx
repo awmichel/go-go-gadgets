@@ -1,4 +1,4 @@
-import type React from "react";
+import type React from 'react';
 
 export interface InputFieldProps {
   id: string;
@@ -17,8 +17,8 @@ export const InputField: React.FC<InputFieldProps> = ({
   label,
   value,
   onChange,
-  type = "number",
-  className = "",
+  type = 'number',
+  className = '',
   min,
   step,
   placeholder,
@@ -58,7 +58,7 @@ export const SelectField: React.FC<SelectFieldProps> = ({
   value,
   onChange,
   options,
-  className = "",
+  className = '',
 }) => (
   <div>
     <label

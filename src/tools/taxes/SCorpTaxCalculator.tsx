@@ -5,17 +5,17 @@ import {
   FileText,
   TrendingUp,
   Users,
-} from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
-import { EditTaxBrackets } from "./EditTaxBrackets";
-import { useTaxBrackets } from "./TaxBracketContext";
-import { InputField, SelectField } from "./TaxFormFields";
-import { type FilingStatus, calculateTax, formatCurrency } from "./taxUtils";
-import { useLocalStorageState } from "./useLocalStorageState";
+} from 'lucide-react';
+import { useEffect, useMemo, useState } from 'react';
+import { EditTaxBrackets } from './EditTaxBrackets';
+import { useTaxBrackets } from './TaxBracketContext';
+import { InputField, SelectField } from './TaxFormFields';
+import { type FilingStatus, calculateTax, formatCurrency } from './taxUtils';
+import { useLocalStorageState } from './useLocalStorageState';
 
 // Add standardDeductions definition for SCorpTaxCalculator
 const standardDeductions: Record<
-  "single" | "marriedJoint",
+  'single' | 'marriedJoint',
   { federal: number }
 > = {
   single: { federal: 14600 },
@@ -32,14 +32,14 @@ type SCorpCalculatorState = {
   priorYearTax: number;
   filingStatus: FilingStatus;
   commercialActivity: number;
-  deductionType: "standard" | "itemized";
+  deductionType: 'standard' | 'itemized';
   itemizedAmount: string; // Use string to handle empty input
 };
 
 const SCorpTaxCalculator = () => {
   // Replace all useState for inputs, deductionType, itemizedAmount with useLocalStorageStates
   const [state, setState] = useLocalStorageState<SCorpCalculatorState>(
-    "scorpInputs",
+    'scorpInputs',
     {
       revenue: 150000,
       salary: 60000,
@@ -48,11 +48,11 @@ const SCorpTaxCalculator = () => {
       retirementContribution: 5000,
       homeOfficeDeduction: 2000,
       priorYearTax: 0,
-      filingStatus: "single",
+      filingStatus: 'single',
       commercialActivity: 150000,
-      deductionType: "standard",
-      itemizedAmount: "",
-    }
+      deductionType: 'standard',
+      itemizedAmount: '',
+    },
   );
 
   const [showBrackets, setShowBrackets] = useState(false);
@@ -85,7 +85,7 @@ const SCorpTaxCalculator = () => {
       state.salary * payrollRates.medicareEmployer;
     const futa = Math.min(
       state.salary * payrollRates.futa,
-      payrollRates.futaWageBase * payrollRates.futa
+      payrollRates.futaWageBase * payrollRates.futa,
     );
     const suta = state.salary * payrollRates.suta;
 
@@ -100,7 +100,7 @@ const SCorpTaxCalculator = () => {
 
     const businessProfit = Math.max(
       0,
-      state.revenue - state.salary - totalBusinessExpenses
+      state.revenue - state.salary - totalBusinessExpenses,
     );
 
     // Employee payroll taxes
@@ -111,16 +111,16 @@ const SCorpTaxCalculator = () => {
     const medicareeSurtax = Math.max(
       0,
       (state.salary - payrollRates.medicareSurtaxThreshold) *
-        payrollRates.medicareSurtaxRate
+        payrollRates.medicareSurtaxRate,
     );
     const oregonPaidLeave = state.salary * payrollRates.oregonPaidLeave;
     const oregonTransit = state.salary * payrollRates.oregonTransit;
 
     // Total income for tax purposes
     const deductionValue =
-      state.deductionType === "standard"
+      state.deductionType === 'standard'
         ? standardDeductions[
-            state.filingStatus === "marriedJoint" ? "marriedJoint" : "single"
+            state.filingStatus === 'marriedJoint' ? 'marriedJoint' : 'single'
           ].federal
         : Number.parseFloat(state.itemizedAmount) || 0;
 
@@ -129,7 +129,7 @@ const SCorpTaxCalculator = () => {
     // Federal income tax
     const federalTax = calculateTax(
       totalIncome,
-      federalBrackets[state.filingStatus] || federalBrackets.single
+      federalBrackets[state.filingStatus] || federalBrackets.single,
     );
 
     // Oregon income tax
@@ -155,7 +155,7 @@ const SCorpTaxCalculator = () => {
     // Quarterly payment calculation
     const requiredQuarterly = Math.max(
       (totalTaxes - totalPayrollTaxes) / 4, // Current year estimate
-      (state.priorYearTax * 1.1) / 4 // 110% safe harbor
+      (state.priorYearTax * 1.1) / 4, // 110% safe harbor
     );
 
     return {
@@ -220,7 +220,7 @@ const SCorpTaxCalculator = () => {
                   step="0.001"
                   value={payrollRates.socialSecurityEmployee}
                   onChange={(e) =>
-                    updatePayrollRate("socialSecurityEmployee", e.target.value)
+                    updatePayrollRate('socialSecurityEmployee', e.target.value)
                   }
                   className="w-16 px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
                 />
@@ -241,7 +241,7 @@ const SCorpTaxCalculator = () => {
                   step="0.001"
                   value={payrollRates.socialSecurityEmployer}
                   onChange={(e) =>
-                    updatePayrollRate("socialSecurityEmployer", e.target.value)
+                    updatePayrollRate('socialSecurityEmployer', e.target.value)
                   }
                   className="w-16 px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
                 />
@@ -261,7 +261,7 @@ const SCorpTaxCalculator = () => {
                   type="number"
                   value={payrollRates.socialSecurityWageBase}
                   onChange={(e) =>
-                    updatePayrollRate("socialSecurityWageBase", e.target.value)
+                    updatePayrollRate('socialSecurityWageBase', e.target.value)
                   }
                   className="w-24 px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
                 />
@@ -285,7 +285,7 @@ const SCorpTaxCalculator = () => {
                   step="0.001"
                   value={payrollRates.medicareEmployee}
                   onChange={(e) =>
-                    updatePayrollRate("medicareEmployee", e.target.value)
+                    updatePayrollRate('medicareEmployee', e.target.value)
                   }
                   className="w-16 px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
                 />
@@ -306,7 +306,7 @@ const SCorpTaxCalculator = () => {
                   step="0.001"
                   value={payrollRates.medicareEmployer}
                   onChange={(e) =>
-                    updatePayrollRate("medicareEmployer", e.target.value)
+                    updatePayrollRate('medicareEmployer', e.target.value)
                   }
                   className="w-16 px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
                 />
@@ -327,7 +327,7 @@ const SCorpTaxCalculator = () => {
                   step="0.001"
                   value={payrollRates.medicareSurtaxRate}
                   onChange={(e) =>
-                    updatePayrollRate("medicareSurtaxRate", e.target.value)
+                    updatePayrollRate('medicareSurtaxRate', e.target.value)
                   }
                   className="w-16 px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
                 />
@@ -347,7 +347,7 @@ const SCorpTaxCalculator = () => {
                   type="number"
                   value={payrollRates.medicareSurtaxThreshold}
                   onChange={(e) =>
-                    updatePayrollRate("medicareSurtaxThreshold", e.target.value)
+                    updatePayrollRate('medicareSurtaxThreshold', e.target.value)
                   }
                   className="w-24 px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
                 />
@@ -371,7 +371,7 @@ const SCorpTaxCalculator = () => {
                   step="0.001"
                   value={payrollRates.oregonPaidLeave}
                   onChange={(e) =>
-                    updatePayrollRate("oregonPaidLeave", e.target.value)
+                    updatePayrollRate('oregonPaidLeave', e.target.value)
                   }
                   className="w-16 px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
                 />
@@ -392,7 +392,7 @@ const SCorpTaxCalculator = () => {
                   step="0.001"
                   value={payrollRates.oregonTransit}
                   onChange={(e) =>
-                    updatePayrollRate("oregonTransit", e.target.value)
+                    updatePayrollRate('oregonTransit', e.target.value)
                   }
                   className="w-16 px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
                 />
@@ -409,7 +409,7 @@ const SCorpTaxCalculator = () => {
                   type="number"
                   step="0.001"
                   value={payrollRates.suta}
-                  onChange={(e) => updatePayrollRate("suta", e.target.value)}
+                  onChange={(e) => updatePayrollRate('suta', e.target.value)}
                   className="w-16 px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
                 />
                 <span className="text-xs text-gray-600">
@@ -431,7 +431,7 @@ const SCorpTaxCalculator = () => {
                   type="number"
                   step="0.001"
                   value={payrollRates.futa}
-                  onChange={(e) => updatePayrollRate("futa", e.target.value)}
+                  onChange={(e) => updatePayrollRate('futa', e.target.value)}
                   className="w-16 px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
                 />
                 <span className="text-xs text-gray-600">
@@ -450,7 +450,7 @@ const SCorpTaxCalculator = () => {
                   type="number"
                   value={payrollRates.futaWageBase}
                   onChange={(e) =>
-                    updatePayrollRate("futaWageBase", e.target.value)
+                    updatePayrollRate('futaWageBase', e.target.value)
                   }
                   className="w-24 px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
                 />
@@ -464,7 +464,7 @@ const SCorpTaxCalculator = () => {
 
   // Save inputs to localStorage on change
   useEffect(() => {
-    localStorage.setItem("scorpInputs", JSON.stringify(state));
+    localStorage.setItem('scorpInputs', JSON.stringify(state));
   }, [state]);
 
   return (
@@ -483,7 +483,7 @@ const SCorpTaxCalculator = () => {
             className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
           >
             <BarChart3 className="w-4 h-4" />
-            {showBrackets ? "Hide" : "Show"} Tax Brackets
+            {showBrackets ? 'Hide' : 'Show'} Tax Brackets
           </button>
           <button
             type="button"
@@ -491,7 +491,7 @@ const SCorpTaxCalculator = () => {
             className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
           >
             <Users className="w-4 h-4" />
-            {showPayrollRates ? "Hide" : "Show"} Payroll Rates
+            {showPayrollRates ? 'Hide' : 'Show'} Payroll Rates
           </button>
         </div>
       </div>
@@ -537,7 +537,7 @@ const SCorpTaxCalculator = () => {
                   id="revenue"
                   type="number"
                   value={state.revenue}
-                  onChange={(e) => updateInput("revenue", e.target.value)}
+                  onChange={(e) => updateInput('revenue', e.target.value)}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
@@ -552,7 +552,7 @@ const SCorpTaxCalculator = () => {
                   id="salary"
                   type="number"
                   value={state.salary}
-                  onChange={(e) => updateInput("salary", e.target.value)}
+                  onChange={(e) => updateInput('salary', e.target.value)}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
@@ -568,7 +568,7 @@ const SCorpTaxCalculator = () => {
                   type="number"
                   value={state.businessExpenses}
                   onChange={(e) =>
-                    updateInput("businessExpenses", e.target.value)
+                    updateInput('businessExpenses', e.target.value)
                   }
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
@@ -585,7 +585,7 @@ const SCorpTaxCalculator = () => {
                   type="number"
                   value={state.healthInsurance}
                   onChange={(e) =>
-                    updateInput("healthInsurance", e.target.value)
+                    updateInput('healthInsurance', e.target.value)
                   }
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
@@ -602,7 +602,7 @@ const SCorpTaxCalculator = () => {
                   type="number"
                   value={state.retirementContribution}
                   onChange={(e) =>
-                    updateInput("retirementContribution", e.target.value)
+                    updateInput('retirementContribution', e.target.value)
                   }
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
@@ -619,7 +619,7 @@ const SCorpTaxCalculator = () => {
                   type="number"
                   value={state.homeOfficeDeduction}
                   onChange={(e) =>
-                    updateInput("homeOfficeDeduction", e.target.value)
+                    updateInput('homeOfficeDeduction', e.target.value)
                   }
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
@@ -635,7 +635,7 @@ const SCorpTaxCalculator = () => {
                   id="priorYearTax"
                   type="number"
                   value={state.priorYearTax}
-                  onChange={(e) => updateInput("priorYearTax", e.target.value)}
+                  onChange={(e) => updateInput('priorYearTax', e.target.value)}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
@@ -651,11 +651,11 @@ const SCorpTaxCalculator = () => {
                     })
                   }
                   options={[
-                    { value: "single", label: "Single" },
-                    { value: "marriedJoint", label: "Married Filing Jointly" },
+                    { value: 'single', label: 'Single' },
+                    { value: 'marriedJoint', label: 'Married Filing Jointly' },
                     {
-                      value: "marriedSeparate",
-                      label: "Married Filing Separately",
+                      value: 'marriedSeparate',
+                      label: 'Married Filing Separately',
                     },
                   ]}
                 />
@@ -672,20 +672,20 @@ const SCorpTaxCalculator = () => {
                     <input
                       type="radio"
                       name="deductionType"
-                      checked={state.deductionType === "standard"}
+                      checked={state.deductionType === 'standard'}
                       onChange={() =>
-                        setState({ ...state, deductionType: "standard" })
+                        setState({ ...state, deductionType: 'standard' })
                       }
                       className="mr-2"
                     />
                     <span className="text-sm">
-                      Standard Deduction (Federal:{" "}
+                      Standard Deduction (Federal:{' '}
                       {formatCurrency(
                         standardDeductions[
-                          state.filingStatus === "marriedJoint"
-                            ? "marriedJoint"
-                            : "single"
-                        ].federal
+                          state.filingStatus === 'marriedJoint'
+                            ? 'marriedJoint'
+                            : 'single'
+                        ].federal,
                       )}
                       )
                     </span>
@@ -694,15 +694,15 @@ const SCorpTaxCalculator = () => {
                     <input
                       type="radio"
                       name="deductionType"
-                      checked={state.deductionType === "itemized"}
+                      checked={state.deductionType === 'itemized'}
                       onChange={() =>
-                        setState({ ...state, deductionType: "itemized" })
+                        setState({ ...state, deductionType: 'itemized' })
                       }
                       className="mr-2"
                     />
                     <span className="text-sm">Itemized Deductions</span>
                   </label>
-                  {state.deductionType === "itemized" && (
+                  {state.deductionType === 'itemized' && (
                     <InputField
                       id="itemizedAmount"
                       label="Itemized Deduction Amount"
