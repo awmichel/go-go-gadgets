@@ -72,6 +72,7 @@ const SCorpTaxCalculator = () => {
     futa: 0.006,
     futaWageBase: 7000,
     suta: 0.024, // Oregon estimated rate
+    sutaWageBase: 54300,
   });
 
   // Federal tax brackets 2024 (updated for 2025 would be similar)
@@ -87,7 +88,10 @@ const SCorpTaxCalculator = () => {
       state.salary * payrollRates.futa,
       payrollRates.futaWageBase * payrollRates.futa,
     );
-    const suta = state.salary * payrollRates.suta;
+    const suta = Math.min(
+      state.salary * payrollRates.suta,
+      payrollRates.sutaWageBase * payrollRates.suta,
+    );
 
     const totalBusinessExpenses =
       state.businessExpenses +
@@ -124,16 +128,17 @@ const SCorpTaxCalculator = () => {
           ].federal
         : Number.parseFloat(state.itemizedAmount) || 0;
 
-    const totalIncome = state.salary + businessProfit - deductionValue;
+    const totalIncome = state.salary + businessProfit;
+    const totalTaxableIncome = state.salary + businessProfit - deductionValue;
 
     // Federal income tax
     const federalTax = calculateTax(
-      totalIncome,
+      totalTaxableIncome,
       federalBrackets[state.filingStatus] || federalBrackets.single,
     );
 
     // Oregon income tax
-    const oregonTax = calculateTax(totalIncome, oregonBrackets);
+    const oregonTax = calculateTax(totalTaxableIncome, oregonBrackets);
 
     // Oregon CAT tax
     const catTax = Math.max(0, (state.commercialActivity - 1000000) * 0.0057);
@@ -160,7 +165,7 @@ const SCorpTaxCalculator = () => {
 
     return {
       businessProfit,
-      totalIncome,
+      totalTaxableIncome,
       employerPayrollTaxes,
       socialSecurityEmployee,
       medicareEmployee,
@@ -513,7 +518,7 @@ const SCorpTaxCalculator = () => {
       {showBrackets && (
         <EditTaxBrackets
           filingStatus={state.filingStatus}
-          totalIncome={calculations.totalIncome}
+          totalIncome={calculations.totalTaxableIncome}
         />
       )}
 
@@ -741,7 +746,7 @@ const SCorpTaxCalculator = () => {
                   Total Taxable Income
                 </div>
                 <div className="text-lg font-semibold">
-                  {formatCurrency(calculations.totalIncome)}
+                  {formatCurrency(calculations.totalTaxableIncome)}
                 </div>
               </div>
 
